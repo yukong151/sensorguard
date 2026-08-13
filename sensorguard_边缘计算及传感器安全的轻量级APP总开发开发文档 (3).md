@@ -1652,7 +1652,7 @@ sensorguard/
     ├── build.gradle.kts
     ├── src/main/
     │   ├── AndroidManifest.xml
-    │   ├── java/com/sensorguard/app/
+    │   ├── java/com/yuexiao12/sensorguard/
     │   │   ├── App.kt
     │   │   ├── MainActivity.kt
     │   │   ├── service/GuardService.kt
@@ -1945,10 +1945,10 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 android {
-    namespace = "com.sensorguard.app"
+    namespace = "com.yuexiao12.sensorguard"
     compileSdk = 34
     defaultConfig {
-        applicationId = "com.sensorguard.app"
+        applicationId = "com.yuexiao12.sensorguard"
         minSdk = 29; targetSdk = 34
         versionCode = 1; versionName = "1.0.0"
         ndk { abiFilters += listOf("arm64-v8a") }
@@ -2022,12 +2022,12 @@ dependencies {
 </resources>
 ```
 
-**`app/src/main/java/com/sensorguard/app/App.kt`**
+**`app/src/main/java/com/yuexiao12/sensorguard/App.kt`**
 ```kotlin
-package com.sensorguard.app
+package com.yuexiao12.sensorguard
 
 import android.app.Application
-import com.sensorguard.app.jni.SgNative
+import com.yuexiao12.sensorguard.jni.SgNative
 
 class App : Application() {
     override fun onCreate() {
@@ -2037,9 +2037,9 @@ class App : Application() {
 }
 ```
 
-**`app/src/main/java/com/sensorguard/app/jni/SgNative.kt`**
+**`app/src/main/java/com/yuexiao12/sensorguard/jni/SgNative.kt`**
 ```kotlin
-package com.sensorguard.app.jni
+package com.yuexiao12.sensorguard.jni
 
 object SgNative {
     init { System.loadLibrary("sensorguard") }
@@ -2060,9 +2060,9 @@ object SgNative {
 
 > 说明: Kotlin `external` 声明对应的 JNI C 桥接层在 W2 由 `cbindgen` 或手写一层薄 `jni.rs` 生成,W1 骨架先保证 `System.loadLibrary` 能成功加载 `libsensorguard.so`。
 
-**`app/src/main/java/com/sensorguard/app/jni/SgErrors.kt`**
+**`app/src/main/java/com/yuexiao12/sensorguard/jni/SgErrors.kt`**
 ```kotlin
-package com.sensorguard.app.jni
+package com.yuexiao12.sensorguard.jni
 
 import android.util.Log
 
@@ -2084,9 +2084,9 @@ object SgErrors {
 }
 ```
 
-**`app/src/main/java/com/sensorguard/app/service/GuardService.kt`**
+**`app/src/main/java/com/yuexiao12/sensorguard/service/GuardService.kt`**
 ```kotlin
-package com.sensorguard.app.service
+package com.yuexiao12.sensorguard.service
 
 import android.app.*
 import android.content.Intent
@@ -2095,8 +2095,8 @@ import android.os.Build
 import android.os.IBinder
 import android.os.SystemClock
 import androidx.core.app.NotificationCompat
-import com.sensorguard.app.R
-import com.sensorguard.app.jni.SgNative
+import com.yuexiao12.sensorguard.R
+import com.yuexiao12.sensorguard.jni.SgNative
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -2161,16 +2161,16 @@ class GuardService : Service() {
 }
 ```
 
-**`app/src/main/java/com/sensorguard/app/MainActivity.kt`**
+**`app/src/main/java/com/yuexiao12/sensorguard/MainActivity.kt`**
 ```kotlin
-package com.sensorguard.app
+package com.yuexiao12.sensorguard
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import com.sensorguard.app.service.GuardService
+import com.yuexiao12.sensorguard.service.GuardService
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(s: Bundle?) {
@@ -3174,7 +3174,7 @@ src/store/res/values/strings.xml     (覆盖: alert_title="观察记录")
 ## **1 · `FbBuilder.kt`(独立文件,通用最小构建器)**
 
 ```kotlin
-package com.sensorguard.app.jni
+package com.yuexiao12.sensorguard.jni
 
 /**
  * 最小依赖的 FlatBuffers 构建器,只实现 sensorguard.fbs 用到的子集:
@@ -3383,7 +3383,7 @@ class FbBuilder(initialCapacity: Int = 256) {
 ## **2 · `FbSerde.kt`(编码逻辑,只依赖上面的 `FbBuilder`)**
 
 ```kotlin
-package com.sensorguard.app.jni
+package com.yuexiao12.sensorguard.jni
 
 /** 与 schemas/sensorguard.fbs 中 OpKind/Phase 枚举值保持一致,勿单独修改。*/
 object SgEnum {
@@ -3520,7 +3520,7 @@ object FbSerde {
 放在 `app/src/test/java/...`,不会被打进 APK,专门用来做往返验证,证明编码结果符合标准 FlatBuffers 布局规则(`fieldPos = tablePos + vtable偏移`,`目标位置 = 引用位置 + 存储值`)。
 
 ```kotlin
-package com.sensorguard.app.jni
+package com.yuexiao12.sensorguard.jni
 
 /** 仅用于单元测试的最小 FlatBuffers 读取器,不参与 release 编译。*/
 object FbReader {
@@ -3558,10 +3558,10 @@ object FbReader {
 
 ## **4 · 往返验证单测(补上"src/test 是空的"这个问题)**
 
-`app/src/test/java/com/sensorguard/app/jni/FbSerdeTest.kt`
+`app/src/test/java/com/yuexiao12/sensorguard/jni/FbSerdeTest.kt`
 
 ```kotlin
-package com.sensorguard.app.jni
+package com.yuexiao12.sensorguard.jni
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

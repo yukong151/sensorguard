@@ -8,7 +8,7 @@
 
 # Rust .so 通过 System.loadLibrary 加载,无需 java 侧保留,
 # 但 Kotlin external fun 所在类必须保留(否则 JNI 方法表丢失)。
--keep class com.sensorguard.app.jni.SgNative { *; }
+-keep class com.yuexiao12.sensorguard.jni.SgNative { *; }
 
 # ── Room(Room 生成代码 + 实体) ──────────────────────────────────────────────
 -keep class * extends androidx.room.RoomDatabase { *; }
@@ -25,7 +25,7 @@
 }
 
 # ── FlatBuffers 生成类(契约字节码反射读取,混淆会破坏字段序) ───────────────
--keep class com.sensorguard.app.jni.** { *; }
+-keep class com.yuexiao12.sensorguard.jni.** { *; }
 
 # ── 序列化(Parcelable/可序列化,当前无 Parcelable 但防未来回归) ─────────────
 -keepclassmembers class * implements android.os.Parcelable {

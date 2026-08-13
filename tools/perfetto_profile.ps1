@@ -22,7 +22,7 @@ param(
 $ErrorActionPreference = "Stop"
 $adb = "C:\Users\ew\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 if (-not (Test-Path $adb)) { $adb = (Get-Command adb).Source }
-$pkg = "com.sensorguard.app"
+$pkg = "com.yuexiao12.sensorguard"
 
 # 前置:设备在线
 $dev = (& $adb devices) | Select-String "device$"

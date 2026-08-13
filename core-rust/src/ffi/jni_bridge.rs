@@ -4,7 +4,7 @@
 //! (文档明确:避免 jni crate 引入 ~100 KB 体积)。
 //!
 //! 符号命名遵循 JNI 规范 `Java_<包名>_<类名>_<方法名>`:
-//!   Kotlin `object SgNative`(包 com.sensorguard.app.jni)→ 实例方法(非 static),
+//!   Kotlin `object SgNative`(包 com.yuexiao12.sensorguard.jni)→ 实例方法(非 static),
 //!   第二参数为 `jobject`(单例 INSTANCE)。
 //!
 //! 类型模型(NDK jni.h C 模式):
