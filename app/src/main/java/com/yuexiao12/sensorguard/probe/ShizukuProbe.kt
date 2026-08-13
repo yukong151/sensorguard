@@ -198,9 +198,19 @@ class ShizukuProbe(
     /** 带超时的 dumpsys 读取,避免 Shizuku 进程挂死阻塞 scheduler 单线程。
      *  经 Shizuku UserService(独立 shell 进程)以 shell 身份执行 dumpsys sensorservice,
      *  替代 13.x 已移除的 Shizuku.newProcess。 */
-    private fun execDumpsys(): String {
+    private fun execDumpsys(): String = execShell("dumpsys sensorservice 2>/dev/null")
+
+    /** P3 (文档 §2 威胁面):经 Shizuku 读 bluetooth_manager dump,供 BtScanProbe 统计扫描频次。
+     *  Shizuku 不可用时返回空串(调用方静默降级)。 */
+    fun execBluetoothManager(): String {
+        if (!hasPermission()) return ""
+        return try { execShell("dumpsys bluetooth_manager 2>/dev/null") }
+        catch (_: Exception) { "" }
+    }
+
+    private fun execShell(cmd: String): String {
         val svc = ensureUserSvc() ?: throw IOException("Shizuku UserService not bound")
-        val future = ioExecutor.submit(Callable { svc.exec("dumpsys sensorservice 2>/dev/null") })
+        val future = ioExecutor.submit(Callable { svc.exec(cmd) })
         return try {
             future.get(DUMPSYS_TIMEOUT_MS, TimeUnit.MILLISECONDS) ?: ""
         } catch (e: Exception) {

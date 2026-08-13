@@ -11,6 +11,9 @@ object SgEnum {
     const val OP_BARO = 13
     const val OP_LIGHT = 14
     const val OP_PROX = 15
+    // P3 (文档 §2 威胁面):蓝牙扫描为独立威胁面;fbs OpKind 冻结(16+保留给未来),故取 20
+    // 仅用于 Kotlin 侧时间线/告警展示与干预路由,不进入 Rust 规则引擎。
+    const val OP_BT_SCAN = 20
 
     const val PHASE_START = 0
     const val PHASE_STOP = 1

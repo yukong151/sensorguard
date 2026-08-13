@@ -30,6 +30,7 @@ class DetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDetailBinding
     private var intervention: ActionRouter.Intervention? = null
+    private var pkgHashHex: String = "" // P3: 卸载深链反查包名用
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +43,7 @@ class DetailActivity : AppCompatActivity() {
             return
         }
         binding.tvVerdict.text = formatVerdict(v)
+        pkgHashHex = v.pkgHash.joinToString("") { "%02X".format(it) }
 
         // W8 (文档 §6): 干预路由深链 —— GuardService.interventionFor 即 ActionRouter.resolve
         intervention = GuardService.instance?.interventionFor(v) ?: ActionRouter.resolve(v.op)
@@ -57,14 +59,28 @@ class DetailActivity : AppCompatActivity() {
                     getString(R.string.ui_intervention_camera)
                 ActionRouter.InterventionKind.SENSOR_GUIDE ->
                     getString(R.string.ui_intervention_sensor)
+                // P3 (文档 §5.5):蓝牙扫描高频 → 一键卸载入口
+                ActionRouter.InterventionKind.UNINSTALL ->
+                    getString(R.string.ui_intervention_uninstall)
             }
             binding.btnIntervention.setOnClickListener { launchIntervention(i) }
         }
     }
 
-    /** 文档 §6: 深链 Intent → 系统设置隐私页(无额外权限需求)。*/
+    /** 文档 §6 / P3: 深链 Intent → 系统隐私页(无额外权限);UNINSTALL 需拼包名 data URI。*/
     private fun launchIntervention(i: ActionRouter.Intervention) {
-        val intent = Intent(i.intentAction).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val intent: Intent = if (i.kind == ActionRouter.InterventionKind.UNINSTALL) {
+            // P3: 卸载入口需真实包名 —— 从告警归因反查;无包名则退化为设置页
+            val pkg = (GuardService.instance?.attributionFor(pkgHashHex))?.first ?: ""
+            if (pkg.isNotBlank()) {
+                Intent(i.intentAction, android.net.Uri.parse("package:$pkg"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            } else {
+                Intent(ActionRouter.ACTION_PRIVACY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        } else {
+            Intent(i.intentAction).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
         try {
             startActivity(intent)
         } catch (e: ActivityNotFoundException) {

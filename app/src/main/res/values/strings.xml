@@ -35,6 +35,8 @@
     <string name="ui_intervention_mic">打开系统隐私设置(麦克风引导)</string>
     <string name="ui_intervention_camera">打开系统隐私设置(摄像头引导)</string>
     <string name="ui_intervention_sensor">Android 13+ 传感器已关闭引导</string>
+    <!-- P3 (文档 §5.5):蓝牙扫描高频 → 一键卸载入口 -->
+    <string name="ui_intervention_uninstall">卸载该应用</string>
     <string name="ui_event_counts" formatted="false">今日事件 %1$d 条 · 告警 %2$d 条</string>
 
     <!-- W8 (文档 §5/§8): 导出记录(本地) -->

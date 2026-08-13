@@ -6,6 +6,7 @@
 use crate::event_window::{PairWindow, BUCKET_NS, MIN_EVENTS, NUM_BUCKETS};
 use crate::stats::entropy::shannon_entropy_bits;
 use crate::stats::kl::kl_divergence;
+use crate::stats::lomb;
 use crate::thresholds::THRESHOLDS;
 
 /// VerdictKind 枚举值(与 schemas/sensorguard.fbs 一致)
@@ -21,6 +22,8 @@ pub struct L3Stats {
     pub kl_day_night: f64,
     /// 24h 事件数(数据不足判定)
     pub event_total: u32,
+    /// Lomb-Scargle 周期图能量集中度(节律一致性,0..1)
+    pub period_energy: f64,
 }
 
 /// 评估结果
@@ -103,6 +106,12 @@ pub fn evaluate(pw: &PairWindow, now_ns: i64) -> EvalResult {
     let ks_d = ks_time_of_day(pw, now_ns, total);
     let kl = kl_day_night(pw, now_ns);
 
+    // P3: Lomb-Scargle 周期图(节律一致性)
+    let buckets = pw.bucket_counts(now_ns);
+    let bucket_f64: Vec<f64> = buckets.iter().map(|&c| c as f64).collect();
+    let periodogram = lomb::periodogram(&bucket_f64);
+    let period_energy = periodogram.concentration;
+
     // 判定汇总(§5.3):L3 异常 ≥2 → ALERT;数据不足(< MIN_EVENTS)即使异常
     // 也多记 OBSERVE(INSUFFICIENT_DATA,不产出 ALERT)。
     // LEGIT 需要 S_ctx ≥ 0.6 或白名单,由上层(Kotlin / 后续 ctx 模块)判定,
@@ -132,6 +141,7 @@ pub fn evaluate(pw: &PairWindow, now_ns: i64) -> EvalResult {
             burst_entropy: burst,
             kl_day_night: kl,
             event_total: total,
+            period_energy,
         },
         insufficient,
     }

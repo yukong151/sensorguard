@@ -32,6 +32,8 @@ import com.yuexiao12.sensorguard.logic.ActionRouter
 import com.yuexiao12.sensorguard.logic.HealthLevel
 import com.yuexiao12.sensorguard.logic.SystemHealth
 import com.yuexiao12.sensorguard.probe.CameraProbe
+import com.yuexiao12.sensorguard.probe.LocationProbe
+import com.yuexiao12.sensorguard.probe.BtScanProbe
 import com.yuexiao12.sensorguard.probe.CtxProbe
 import com.yuexiao12.sensorguard.probe.MicProbe
 import com.yuexiao12.sensorguard.probe.ProbeEvent
@@ -78,6 +80,10 @@ class GuardService : Service() {
 
     private var micProbe: MicProbe? = null
     private var cameraProbe: CameraProbe? = null
+    // P3 (文档 §5.1):位置探针 —— AppOps startWatchingActive 监听 FINE/COARSE_LOCATION
+    private var locationProbe: LocationProbe? = null
+    // P3 (文档 §2):蓝牙扫描威胁面探针 —— 经 Shizuku dumpsys 统计 discovery 频次
+    private var btScanProbe: BtScanProbe? = null
 
     // W12 (文档 §4 P4):Shizuku 精确归因探针(T2 增强,可选独立插件)
     private var shizukuProbe: ShizukuProbe? = null
@@ -142,6 +148,11 @@ class GuardService : Service() {
         CtxProbe.attach(this)
         micProbe = MicProbe(this).also { it.start(probeSink) }
         cameraProbe = CameraProbe(this).also { it.start(probeSink) }
+        // P3 (文档 §5.1):位置探针(OPSTR_FINE/COARSE_LOCATION, T1 uid归因)
+        locationProbe = LocationProbe(this).also { it.start(probeSink) }
+        // P3 (文档 §2):蓝牙扫描探针,高频时推 OBSERVE 告警
+        btScanProbe = BtScanProbe(this) { count -> pushBtScanAlert(count) }
+            .also { it.start(probeSink) }
         // W12 (文档 §4 P4):Shizuku 精确归因 —— 启用以 ADB 权限读取 dumpsys sensorservice,
         // 获取精确 uid+采样率,覆盖 AppOps 探针无法归因的 IMU 类传感器盲区。
         // start() 内部注册权限/binder 监听器并请求授权: 晚授权(用户在 Shizuku 内手动授予)
@@ -258,6 +269,8 @@ class GuardService : Service() {
      */
     private fun batchTick() {
         maybeDailySummary()
+        // P3 (文档 §2):蓝牙扫描频次检测 —— 经 Shizuku dumpsys bluetooth_manager
+        checkBtScan()
         val level = health.level()
         if (level == HealthLevel.SAFE_MODE || level == HealthLevel.DEAD) {
             maybeSelfHeal()
@@ -327,6 +340,39 @@ class GuardService : Service() {
             }
             sensorAnomalyKinds[h.kind] = h.anomaly
         }
+    }
+
+    /** P3 (文档 §2):蓝牙扫描频次检测 —— Shizuku 可用时读 bluetooth_manager dump,
+     *  由 BtScanProbe 统计窗口内 discovery 翻转次数;高频时回调推 OBSERVE 告警。
+     *  无 Shizuku 时静默降级(不假装检测)。 */
+    private fun checkBtScan() {
+        val probe = btScanProbe ?: return
+        val sp = shizukuProbe ?: return
+        val dump = sp.execBluetoothManager()
+        probe.feedDumpsys(dump.ifBlank { null })
+        // 窗口结算(每 60s 一次):高频时 onHighFreq 回调
+        probe.resetWindow()
+    }
+
+    /** P3 (文档 §2/§5.5):蓝牙扫描高频告警 —— OBSERVE 级,含卸载引导入口(需包名)。*/
+    private fun pushBtScanAlert(count: Int) {
+        val nowNs = System.currentTimeMillis() * 1_000_000L
+        val v = VerdictEntryData(
+            kind = SgEnum.VERDICT_OBSERVE,
+            category = SgEnum.CAT_SIDE_CHANNEL,
+            severity = 55,
+            sCtx = 0f,
+            ruleId = 140, // P3 蓝牙扫描高频(本窗口 discovery 翻转次数)
+            top3 = emptyList(),
+            windowStartNs = nowNs - 60_000_000_000L,
+            windowEndNs = nowNs,
+            evidenceTier = SgEnum.TIER_T1_STANDARD,
+            pkgHash = ByteArray(12), // 蓝牙扫描无 pkgHash 归因(OBSERVE 级,UI 提供卸载引导)
+            op = SgEnum.OP_BT_SCAN,
+            degraded = false,
+        )
+        pushAlert(v)
+        Log.i("SG", "bt scan high-freq: $count discoveries in window (OBSERVE)")
     }
 
     /** W5 (文档 §5.2):第三方高频 IMU 采样(T0 未知来源)的 OBSERVE 告警,进入时间线 UI。*/
@@ -572,6 +618,8 @@ class GuardService : Service() {
     override fun onDestroy() {
         micProbe?.stop()
         cameraProbe?.stop()
+        locationProbe?.stop()
+        btScanProbe?.stop()
         shizukuProbe?.stop()
         sensorBaselineProbe?.stop()
         micProbe = null

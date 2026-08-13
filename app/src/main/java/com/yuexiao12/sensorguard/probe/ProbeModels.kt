@@ -53,8 +53,11 @@ object CtxProbe {
 
     private var keyguard: android.app.KeyguardManager? = null
     private var power: android.os.PowerManager? = null
+    // P3: context 供 DeclPurposeClassifier 离线抽取用途标签
+    private var appContext: android.content.Context? = null
 
     fun attach(context: android.content.Context) {
+        appContext = context.applicationContext
         if (keyguard == null) {
             keyguard = context.getSystemService(android.app.KeyguardManager::class.java)
             power = context.getSystemService(android.os.PowerManager::class.java)
@@ -67,10 +70,12 @@ object CtxProbe {
         // W12/P0-1:systemProxy 反映"调用方是否为系统/核心预装组件",供 R112 等规则
         // 对系统组件豁免(OBSERVE 级侧信道规则不对其触发,消除系统自身误报)。
         val isSystem = isSystemComponent(uid, pkgName)
+        // P3 (文档 §7):decl_purpose 离线抽取 —— App 用途先验(健身/导航/相机/输入法)
+        val purpose = appContext?.let { DeclPurposeClassifier.classify(it, pkgName) } ?: 0
         // fg_state:0=FG。W4 无 UsageStats 权限,无法区分其他 App 前后台,统一 FG(文档 §11 偏差)。
         return com.yuexiao12.sensorguard.jni.CtxTagData(
             fgState = 0, userPresent = userPresent, intentHint = false,
-            declPurpose = 0, systemProxy = isSystem, audioFocus = false,
+            declPurpose = purpose, systemProxy = isSystem, audioFocus = false,
             powerState = powerState, netEgressAnomaly = false,
         )
     }

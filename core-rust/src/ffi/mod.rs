@@ -36,6 +36,39 @@ const FEATURE_EVENT_TOTAL: u8 = 3;
 // Deviation(doc-frozen): 活跃时间/CV/昼夜占比/S_ctx 特征 v1.0 引擎未实现,
 // top3 仅输出已实现的 4 维,未实现维 feature_id 保留占位不输出。
 
+/// S_ctx 上下文一致性分数(文档 §7):S_ctx = w1·fg + w2·user_present + w3·intent_hint
+/// + w4·match(op, decl_purpose) + w5·system_proxy,阈值 0.6 以上直接判合法。
+fn compute_s_ctx(pw: &PairWindow, op: u8) -> f32 {
+    let snap = pw.ctx_snapshot();
+    // 权重:文档 §7 公式
+    const W1: f32 = 0.20;
+    const W2: f32 = 0.20;
+    const W3: f32 = 0.25;
+    const W4: f32 = 0.25;
+    const W5: f32 = 0.10;
+
+    let fg = if snap.fg_state <= 1 { 1.0 } else { 0.0 }; // FG/VISIBLE_BG = 合法
+    let user_present = if snap.user_present { 1.0 } else { 0.0 };
+    let intent_hint = 0.0; // v1.0 无 intent 解析,文档 §7 标记为"待实现"
+    // P3: decl_purpose(1=相机,2=健身,3=导航,4=输入法)与 op 一致性匹配
+    //  op: 0=MIC,1=CAM,2=LOC,10=ACCEL,11=GYRO,12=MAG
+    let match_score = if purpose_matches(snap.decl_purpose, op) { 1.0 } else { 0.0 };
+    let system_proxy = if snap.system_proxy { 1.0 } else { 0.0 };
+
+    W1 * fg + W2 * user_present + W3 * intent_hint + W4 * match_score + W5 * system_proxy
+}
+
+/// P3:目的与操作的语义一致性(op 属于该用途类 App 的合理传感器集)。
+fn purpose_matches(purpose: u8, op: u8) -> bool {
+    match purpose {
+        1 => op == 1,                       // 相机类 → CAMERA
+        2 => (10..=12).contains(&op),       // 健身类 → ACCEL/GYRO/MAG(IMU)
+        3 => op == 2,                       // 导航类 → LOCATION
+        4 => op == 0,                       // 输入法 → RECORD_AUDIO
+        _ => false,                         // 未知用途不贡献
+    }
+}
+
 /// 组装单个 Verdict(§5.3 判定汇总 → fbs Verdict 表)。
 /// kind: VERDICT_LEGIT/OBSERVE/ALERT(值域与 fbs VerdictKind 一致);
 /// category/severity/rule_id: 当 L2 规则命中时取规则的 category/severity/rule_id,
@@ -53,6 +86,7 @@ fn build_verdict<'a>(
     l2: Option<RuleHit>,
     tier: sg::EvidenceTier,
     l4_alert: bool,
+    s_ctx: f32,
 ) -> WIPOffset<sg::Verdict<'a>> {
     // top3 特征:value=统计值, contrib=归一化贡献(0..=1,超阈值程度)
     let ks_contrib = (r.stats.ks_d / THRESHOLDS.ks_tau).clamp(0.0, 1.0) as f32;
@@ -111,7 +145,7 @@ fn build_verdict<'a>(
     vb.add_kind(kind);
     vb.add_category(category);
     vb.add_severity(severity);
-    vb.add_s_ctx(0.0);
+    vb.add_s_ctx(s_ctx);
     vb.add_rule_id(rule_id);
     vb.add_top3(top3);
     vb.add_window_start_ns(now_ns - WINDOW_24H_NS);
@@ -473,6 +507,7 @@ pub extern "C" fn sg_tick(
                                     l2,
                                     tier,
                                     l4_alert,
+                                    compute_s_ctx(pw, op.0),
                                 ));
                             }
                         }
@@ -494,6 +529,7 @@ pub extern "C" fn sg_tick(
                                 None,
                                 tier,
                                 false, // 降级路径不做 L4
+                                0.0,   // 降级路径无上下文,默认 s_ctx=0
                             ));
                         }
                     }
