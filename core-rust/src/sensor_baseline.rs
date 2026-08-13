@@ -3,7 +3,8 @@
 //! 我方以 ~50 Hz 自采 accel/gyro(由 Android `SensorBaselineProbe` 经 `sg_push_sensor`
 //! 注入环形缓冲 `RING`)。当第三方以更高频率激活同一物理传感器时,HAL 切到更高档位,
 //! 我方看到的 `event.timestamp` 抖动分布 D_t 会系统性偏离基线 D0。用两样本 KS 检验
-//! `D_KS = sup|F0 - Ft|` 检测(阈值 τ=0.18,与 §5.3 事件级 KS 同源,来自 §7 标定 corpus)。
+//! `D_KS = sup|F0 - Ft|` 检测(阈值 τ = THRESHOLDS.ks_tau,与 §5.3 事件级 KS 同源,
+//! 由 calibrate.py 从 §7 标定 corpus 产出)。
 //!
 //! 设计要点:
 //! - 热路径 `sg_push_sensor` 仅做 `RING.push`(lock-free),此处不在热路径加锁;
@@ -13,16 +14,24 @@
 
 use crate::ring::{RING, Sample};
 use crate::stats::ks::ks_statistic;
+use crate::thresholds::THRESHOLDS;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::Mutex;
 
 /// 自采基线 warmup 样本数(~30s @50Hz),达到后冻结 D0。
 const BASELINE_CAP: usize = 1500;
 /// 滚动观测窗口样本数(~12s @50Hz),用于计算 D_t。
 const RECENT_CAP: usize = 600;
-/// 传感器基线 KS 阈值(文档 §5.2 τ=0.18)。W9(§7) 应由 calibrate.py 产出并入 THRESHOLDS。
-const SENSOR_KS_TAU: f64 = 0.18;
+
+/// 传感器基线 KS 阈值 —— 统一从 THRESHOLDS.ks_tau 取值(P0-3 修复)。
+/// 原先硬编码 0.18 与 THRESHOLDS.ks_tau(0.0897)冲突,现统一为单一来源,
+/// 由 calibrate.py 从标定 corpus 产出,杜绝双源不一致风险。
+#[inline]
+fn sensor_ks_tau() -> f64 {
+    THRESHOLDS.ks_tau
+}
 
 #[derive(Clone, Default)]
 struct PerKind {
@@ -30,7 +39,9 @@ struct PerKind {
     last_ts: i64,
     warm: bool,
     baseline: Vec<f64>,
-    recent: Vec<f64>,
+    /// P2-8: 使用 VecDeque 替代 Vec,pop_front() 为 O(1)。
+    /// 原 Vec::remove(0) 为 O(n),在 600 样本窗口上每次 feed 调用需移位 ~600 元素。
+    recent: VecDeque<f64>,
 }
 
 impl PerKind {
@@ -52,9 +63,9 @@ impl PerKind {
                         self.warm = true;
                     }
                 } else {
-                    self.recent.push(jitter_ms);
+                    self.recent.push_back(jitter_ms);
                     if self.recent.len() > RECENT_CAP {
-                        self.recent.remove(0);
+                        self.recent.pop_front();
                     }
                 }
             }
@@ -67,7 +78,10 @@ impl PerKind {
         if self.baseline.len() < 2 || self.recent.len() < 2 {
             return 0.0;
         }
-        ks_statistic(&self.baseline, &self.recent)
+        // VecDeque 可能非连续,转 Vec 传给 ks_statistic。
+        // 此方法仅在 60s tick 路径调用,分配开销可忽略。
+        let recent: Vec<f64> = self.recent.iter().copied().collect();
+        ks_statistic(&self.baseline, &recent)
     }
 
     /// 估算采样率(Hz):观测窗口均值间隔倒数的 1000 倍。
@@ -75,12 +89,32 @@ impl PerKind {
         let src: &[f64] = if self.recent.is_empty() {
             &self.baseline
         } else {
-            &self.recent
+            // VecDeque as_slices 返回 (front, back) 两段;遍历即可,无需合并。
+            // 为简化接口,当 recent 非空时从 recent 取值。
+            // 使用迭代器求和避免分配。
+            // 此处借用 self.recent 的数据,但需要 &[f64] 切片。
+            // VecDeque 不保证连续,用 make_contiguous 需要 &mut。
+            // 退而求其次:recent 为空时用 baseline(Vec<f64> → &[f64])。
+            // recent 非空时也转为 Vec。
+            // 但 sample_hz 在 60s tick 路径调用,分配开销可忽略。
+            return self.sample_hz_from_recent();
         };
         if src.is_empty() {
             return 0.0;
         }
         let mean = src.iter().sum::<f64>() / src.len() as f64;
+        if mean <= 0.0 {
+            return 0.0;
+        }
+        (1000.0 / mean) as f32
+    }
+
+    /// P2-8: 从 VecDeque 计算采样率(避免 as_slices 的两段拼接问题)。
+    fn sample_hz_from_recent(&self) -> f32 {
+        if self.recent.is_empty() {
+            return 0.0;
+        }
+        let mean = self.recent.iter().sum::<f64>() / self.recent.len() as f64;
         if mean <= 0.0 {
             return 0.0;
         }
@@ -144,7 +178,7 @@ impl SensorBaseline {
                 out.push(SensorHealth {
                     kind: st.kind,
                     ks_d: d as f32,
-                    anomaly: d > SENSOR_KS_TAU,
+                    anomaly: d > sensor_ks_tau(),
                     sample_hz: st.sample_hz(),
                 });
             }
@@ -245,7 +279,7 @@ mod tests {
             "分布偏移应触发异常, ks_d={}",
             h[0].ks_d
         );
-        assert!(h[0].ks_d > SENSOR_KS_TAU as f32);
+        assert!(h[0].ks_d > sensor_ks_tau() as f32);
     }
 
     #[test]

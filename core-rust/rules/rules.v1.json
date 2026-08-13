@@ -173,7 +173,8 @@
     "debounce": { "window_s": 300, "min_hits": 1, "cool_down_s": 900 },
     "predicates": [
       { "op_in": [10, 11] },
-      { "system_proxy_equals": false }
+      { "system_proxy_equals": false },
+      { "decl_purpose_not_in": [2, 3] }
     ]
   },
   {

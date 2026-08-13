@@ -1,5 +1,5 @@
 //! W2~W3 (文档 §5.3):L3 评估引擎 —— 从事件窗口提取统计量并判定 Verdict。
-//! 聚合三项纯统计(KS / Burst 熵 / KL),按 §5.3 判定汇总输出 VerdictKind。
+//! 聚合四项纯统计(KS / Burst 熵 / KL / Lomb-Scargle 周期能量),按 §5.3 判定汇总输出 VerdictKind。
 //! 阈值与基线分布由阈值文件提供(§7:calibrate.py 产出,不可手改);
 //! v1.0 内置默认基线(均匀分布近似),后续由阈值文件覆盖。
 
@@ -30,7 +30,7 @@ pub struct L3Stats {
 #[derive(Clone, Copy, Debug)]
 pub struct EvalResult {
     pub verdict: u8,
-    /// 触发异常标记的检验个数(0..=3),供 debounce 逻辑使用
+    /// 触发异常标记的检验个数(0..=4),供 debounce 逻辑使用
     pub alerts: u8,
     pub stats: L3Stats,
     /// 数据不足(事件数 < MIN_EVENTS)
@@ -114,6 +114,7 @@ pub fn evaluate(pw: &PairWindow, now_ns: i64) -> EvalResult {
 
     // 判定汇总(§5.3):L3 异常 ≥2 → ALERT;数据不足(< MIN_EVENTS)即使异常
     // 也多记 OBSERVE(INSUFFICIENT_DATA,不产出 ALERT)。
+    // 四项检验:KS 偏移 / Burst 熵越界 / KL 昼夜散度 / Lomb-Scargle 周期集中度。
     // LEGIT 需要 S_ctx ≥ 0.6 或白名单,由上层(Kotlin / 后续 ctx 模块)判定,
     // 此处 L3 引擎不输出 LEGIT。
     let mut alerts = 0u8;
@@ -124,6 +125,11 @@ pub fn evaluate(pw: &PairWindow, now_ns: i64) -> EvalResult {
         alerts += 1;
     }
     if kl > THRESHOLDS.kl_divergence {
+        alerts += 1;
+    }
+    // P2-3: Lomb-Scargle 周期能量集中度参与 ALERT 判定。
+    // 高集中度意味着事件呈强周期性(如固定间隔轮询),是隐蔽采集的典型特征。
+    if period_energy > THRESHOLDS.period_energy_concentration {
         alerts += 1;
     }
 
@@ -259,6 +265,48 @@ mod tests {
             r.stats.kl_day_night > 0.1,
             "夜间集中 kl 应显著, got {}",
             r.stats.kl_day_night
+        );
+    }
+
+    #[test]
+    fn periodic_events_trigger_period_energy_alert() {
+        // P2-3: 验证 Lomb-Scargle 周期能量集中度参与 ALERT 判定。
+        // 创建填满 24h 窗口的方波:每 240 分钟(4h)切换开/关,每分钟 1 事件。
+        // 分钟 1-120:on, 121-240:off, 241-360:on, ... 共 6 个 on 段 × 120 = 720 事件。
+        // 周期 240 分钟 → 频率 1/240 ≈ 0.00417,在 Lomb-Scargle 扫描范围内。
+        // 全窗口填充 → 无非周期零值前缀 → 高 concentration。
+        // 间隔直方图:开段内 60s + 段间 ~6600s → 2 个非零桶 → 低 burst 熵。
+        let mut pw = PairWindow::new(PairKey::new(1, 0));
+        let t0 = 1_700_000_000_000_000_000i64;
+        for i in 1..=1439i64 {
+            // 方波:每 120 分钟切换
+            if (i / 120) % 2 == 0 {
+                pw.record(t0 + i * 60_000_000_000);
+            }
+        }
+        // now = 最后一个事件分钟 + 1
+        let now = t0 + 1440 * 60_000_000_000;
+        let r = evaluate(&pw, now);
+        assert!(!r.insufficient, "事件数 {} 应≥20", r.stats.event_total);
+        // 方波模式应有较高能量集中度(强基频,全窗口填充)
+        assert!(
+            r.stats.period_energy > THRESHOLDS.period_energy_concentration,
+            "方波 period_energy 应超阈值, got {} vs {}",
+            r.stats.period_energy,
+            THRESHOLDS.period_energy_concentration
+        );
+        // 间隔直方图:开段内 60s + 段间 ~6600s → 低 burst 熵
+        assert!(
+            r.stats.burst_entropy < THRESHOLDS.burst_entropy_min,
+            "方波 burst 熵应低, got {}",
+            r.stats.burst_entropy
+        );
+        // 两项同时触发 → ALERT
+        assert!(
+            r.verdict == VERDICT_ALERT,
+            "周期性 + 低熵应 ALERT, alerts={}, stats={:?}",
+            r.alerts,
+            r.stats
         );
     }
 }

@@ -39,3 +39,22 @@ data class KeychainEntity(
     val retiredAtMs: Long? = null,
     val status: Int = 0,
 )
+
+/**
+ * P2-6: 归因映射表 —— `attribution(pkg_hash_hex, pkg_name, uid)`。
+ *
+ * 持久化 uid→包名映射,使设备重启后仍可解析告警/事件时间线上的包指纹归属。
+ * 原先仅内存 ConcurrentHashMap(会话级),重启即丢失;现同步至 Room(v2 migration)。
+ *
+ * 注意:pkgHashHex 为 12 字节包指纹的 hex 编码(24 字符),作主键;
+ * pkgName 可能为空串(T0 事件如 MIC/CAMERA 无法归因 uid);
+ * uid 为 -1 表示 T0 无归因事件。
+ */
+@Entity(tableName = "attribution")
+data class AttributionEntity(
+    @PrimaryKey val pkgHashHex: String,
+    val pkgName: String,
+    val uid: Int,
+    /** 首次观测时间(wall-clock ms),用于排查与审计。*/
+    val firstSeenMs: Long,
+)

@@ -2,6 +2,7 @@ package com.yuexiao12.sensorguard.db
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 
@@ -56,4 +57,32 @@ interface KeychainDao {
     /** 遗忘权(§8.2):销毁全部 DEK 包裹密钥,密文瞬间变随机字节。*/
     @Query("DELETE FROM keychain")
     fun wipeAll()
+}
+
+/**
+ * P2-6: 归因映射 DAO —— `attribution(pkg_hash_hex, pkg_name, uid, first_seen_ms)`。
+ *
+ * 持久化 uid→包名映射,使设备重启后仍可解析告警/事件时间线上的包指纹归属。
+ * 同 EventDao:阻塞式,仅供后台线程调用。
+ */
+@Dao
+interface AttributionDao {
+    /** 插入新映射;已存在则忽略(同一包指纹不覆盖首次观测时间)。*/
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertIfAbsent(entity: AttributionEntity)
+
+    /** 启动时全量加载到内存映射。*/
+    @Query("SELECT * FROM attribution")
+    fun all(): List<AttributionEntity>
+
+    /** 按包指纹 hex 查询。*/
+    @Query("SELECT * FROM attribution WHERE pkgHashHex = :hex")
+    fun get(hex: String): AttributionEntity?
+
+    /** 遗忘权(§8.2):清除全部归因映射。*/
+    @Query("DELETE FROM attribution")
+    fun clearAll()
+
+    @Query("SELECT COUNT(*) FROM attribution")
+    fun count(): Long
 }

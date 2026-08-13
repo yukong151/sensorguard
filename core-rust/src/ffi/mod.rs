@@ -49,7 +49,7 @@ fn compute_s_ctx(pw: &PairWindow, op: u8) -> f32 {
 
     let fg = if snap.fg_state <= 1 { 1.0 } else { 0.0 }; // FG/VISIBLE_BG = 合法
     let user_present = if snap.user_present { 1.0 } else { 0.0 };
-    let intent_hint = 0.0; // v1.0 无 intent 解析,文档 §7 标记为"待实现"
+    let intent_hint = if snap.intent_hint { 1.0 } else { 0.0 }; // P2-2: 启用实际 intent_hint(由 Kotlin CtxProbe 产出)
     // P3: decl_purpose(1=相机,2=健身,3=导航,4=输入法)与 op 一致性匹配
     //  op: 0=MIC,1=CAM,2=LOC,10=ACCEL,11=GYRO,12=MAG
     let match_score = if purpose_matches(snap.decl_purpose, op) { 1.0 } else { 0.0 };
@@ -238,6 +238,8 @@ fn build_eval_ctx(
         power_state: snap.power_state,
         intent_hint: snap.intent_hint,
         system_proxy: snap.system_proxy,
+        audio_focus: snap.audio_focus,
+        net_egress_anomaly: snap.net_egress_anomaly,
         count_in_window,
         ks_d: Some(r.stats.ks_d as f32),
         burst_entropy: Some(r.stats.burst_entropy as f32),
@@ -397,6 +399,8 @@ pub extern "C" fn sg_push_op(buf: *const u8, len: usize) -> i32 {
                 intent_hint: t.intent_hint(),
                 decl_purpose: t.decl_purpose(),
                 system_proxy: t.system_proxy(),
+                audio_focus: t.audio_focus(),
+                net_egress_anomaly: t.net_egress_anomaly(),
             },
             None => crate::event_window::CtxSnapshot::default(),
         };
@@ -702,9 +706,9 @@ mod tests {
             intent_hint,
             decl_purpose,
             system_proxy,
-            false, // audio_focus(v1.0 未建模,L2 无此谓词)
+            false, // audio_focus(P2-2 已建模,测试夹具固定 false)
             power_state,
-            false, // net_egress_anomaly(v1.0 未建模)
+            false, // net_egress_anomaly(P2-2 已建模,测试夹具固定 false)
         );
         eb.add_ctx(&ctx);
         let root = eb.finish();

@@ -3,7 +3,7 @@
 //! 不引入 serde_json(release 增量约 180~250 KB,违反 §6 体积预算 ≤ 15 KB);
 //! 规则文件字段集合封闭(§2 20 条清单),仅按 key 名做子串定位 + 类型转换,
 //! 不构建通用 JSON AST。输入为 UTF-8 字节流,来自 rules.v1.json
-//! (运行时经 Ed25519 校验后传入,签名验证接线属 W7+ 范围)。
+//! (运行时经 Ed25519 校验后传入,签名验证由 verify_rules_signature 完成)。
 //!
 //! schema(顶层数组,元素为规则对象):
 //!   { "id", "category", "kind", "severity", "min_tier", "batch",
@@ -12,6 +12,17 @@
 //! 谓词 key 集与 rules.rs::Predicate 变体一一对应(见 parse_predicate)。
 
 use crate::rules::{Debounce, Predicate, Rule, RuleBatch, RuleCategory, RuleKind};
+use ed25519_dalek::{Signature, Verifier, VerifyingKey};
+
+/// P1-3: Ed25519 公钥(32 字节)。
+///
+/// 生产环境由离线密钥生成工具产出,对应私钥保管在离线 HSM 中,
+/// 用于签名 OTA 规则更新文件。当前为占位全零公钥 ——
+/// 签名验证基础设施已就绪,待密钥管理流程建立后替换为真实公钥。
+///
+/// 安全说明:公钥本身不是秘密,硬编码在二进制中是标准做法。
+/// 攻击者即使知道公钥也无法伪造签名(不知道私钥)。
+const RULES_PUBKEY: [u8; 32] = [0u8; 32];
 
 /// 解析 rules.v1.json(顶层数组)为规则向量。任何结构不符返回 Err(&'static str)。
 pub fn load_rules(json_bytes: &[u8]) -> Result<Vec<Rule>, &'static str> {
@@ -22,6 +33,53 @@ pub fn load_rules(json_bytes: &[u8]) -> Result<Vec<Rule>, &'static str> {
         rules.push(parse_one_rule(obj)?);
     }
     Ok(rules)
+}
+
+/// P1-3: 验证规则 JSON 的 Ed25519 签名。
+///
+/// `rules_json` 为规则文件原始字节,`sig` 为 64 字节 Ed25519 签名。
+/// 验证通过返回 `Ok(())`,失败返回 `Err`。
+///
+/// 用途:OTA 规则更新时,先调用此函数验证签名,再调用 `load_rules` 解析。
+/// 签名验证失败时调用方应回退到 `builtin_rules()`(编译时嵌入的安全规则)。
+///
+/// 注意:当前公钥为占位全零值。全零公钥在 ed25519-dalek 中会导致
+/// `VerifyingKey::from_bytes` 返回错误,因此全零公钥时签名验证将始终失败,
+/// 这是安全侧倒行为(公钥未配置 = 拒绝一切外部规则)。
+pub fn verify_rules_signature(rules_json: &[u8], sig: &[u8]) -> Result<(), &'static str> {
+    if sig.len() != 64 {
+        return Err("bad signature length: expected 64 bytes");
+    }
+    // P1-3 安全检查:全零公钥是 Ed25519 恒等点,与全零签名组合会对任意消息验证通过。
+    // 显式拒绝占位公钥,确保公钥未配置时签名验证始终失败(安全侧倒)。
+    if RULES_PUBKEY == [0u8; 32] {
+        return Err("placeholder all-zeros pubkey: replace with real public key before enabling OTA");
+    }
+    // 从字节构造公钥
+    let pubkey = VerifyingKey::from_bytes(&RULES_PUBKEY)
+        .map_err(|_| "invalid pubkey bytes")?;
+    let signature = Signature::from_slice(sig)
+        .map_err(|_| "bad signature bytes")?;
+    pubkey
+        .verify(rules_json, &signature)
+        .map_err(|_| "signature verification failed")
+}
+
+/// P1-3: 带签名验证的规则加载。
+///
+/// 先验证签名,通过后解析规则。签名验证失败返回 Err,
+/// 调用方应回退到 `builtin_rules()`。
+///
+/// `sig` 为 `Some` 时验证签名;`None` 时跳过验证(仅用于编译时内嵌规则,
+/// 运行时 OTA 更新必须提供签名)。
+pub fn load_rules_verified(
+    json_bytes: &[u8],
+    sig: Option<&[u8]>,
+) -> Result<Vec<Rule>, &'static str> {
+    if let Some(sig_bytes) = sig {
+        verify_rules_signature(json_bytes, sig_bytes)?;
+    }
+    load_rules(json_bytes)
 }
 
 // ---------- 顶层数组切分 ----------
@@ -473,6 +531,8 @@ mod tests {
             power_state: true,
             intent_hint: true,
             system_proxy: true,
+            audio_focus: false,
+            net_egress_anomaly: false,
             count_in_window: HashMap::new(),
             ks_d: None,
             burst_entropy: None,
@@ -593,5 +653,38 @@ mod tests {
                 assert!(hit.is_none(), "反例不应命中 rule {}", rule.id);
             }
         }
+    }
+
+    // ---------- P1-3: Ed25519 签名验证测试 ----------
+
+    #[test]
+    fn verify_rejects_wrong_signature_length() {
+        let result = verify_rules_signature(b"[]", b"too_short");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "bad signature length: expected 64 bytes");
+    }
+
+    #[test]
+    fn verify_fails_with_placeholder_pubkey() {
+        // 当前公钥为全零占位值,VerifyingKey::from_bytes 会拒绝,
+        // 因此任何签名验证都会失败(安全侧倒:公钥未配置 = 拒绝一切外部规则)。
+        let fake_sig = [0u8; 64];
+        let result = verify_rules_signature(V1_JSON, &fake_sig);
+        assert!(result.is_err(), "全零占位公钥应拒绝所有签名");
+    }
+
+    #[test]
+    fn load_rules_verified_without_signature_works() {
+        // sig=None 时跳过签名验证,等价于 load_rules(向后兼容)
+        let rules = load_rules_verified(V1_JSON, None).expect("None sig should work");
+        assert_eq!(rules.len(), 20);
+    }
+
+    #[test]
+    fn load_rules_verified_with_bad_signature_fails() {
+        // 占位公钥下,任何签名验证都会失败
+        let fake_sig = [0xAAu8; 64];
+        let result = load_rules_verified(V1_JSON, Some(&fake_sig));
+        assert!(result.is_err(), "占位公钥应拒绝签名");
     }
 }

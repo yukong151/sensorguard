@@ -27,6 +27,11 @@ class NetProbe(private val context: Context) : Probe {
     private var lastTs = System.currentTimeMillis()
     private var started = false
 
+    /** P2-2: 上一次 tick 的可疑出端标记,供 CtxProbe.snapshot 读取。*/
+    @Volatile
+    var lastSuspicious: Boolean = false
+        private set
+
     override fun start(sink: ProbeSink) {
         started = true
         // 记录基线(下一次 tick 得增量)
@@ -55,6 +60,7 @@ class NetProbe(private val context: Context) : Probe {
         lastTs = now
 
         val suspicious = rate > SUSPICIOUS_RATE_BPS
+        lastSuspicious = suspicious
         Log.i(TAG, "net delta rx=$dRx tx=$dTx rate=${rate}B/s" +
             if (suspicious) " [suspicious egress, audit only]" else "")
     }

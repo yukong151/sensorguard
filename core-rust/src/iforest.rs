@@ -57,6 +57,18 @@ impl Tree {
             depth += 1;
         }
     }
+
+    /// P2-1: 测试用访问器 —— 节点数。
+    #[cfg(test)]
+    pub fn nodes_count(&self) -> usize {
+        self.nodes.len()
+    }
+
+    /// P2-1: 测试用访问器 —— 节点迭代器。
+    #[cfg(test)]
+    pub fn nodes_iter(&self) -> &[Node] {
+        &self.nodes
+    }
 }
 
 /// Isolation Forest 模型。
@@ -99,6 +111,24 @@ impl IForest {
     pub fn should_alert(&self, features: &[f32; N_FEATURES]) -> bool {
         self.score(features) >= ALERT_THRESHOLD
     }
+
+    /// P2-1: 测试用访问器 —— 树数量。
+    #[cfg(test)]
+    pub fn trees_count(&self) -> usize {
+        self.trees.len()
+    }
+
+    /// P2-1: 测试用访问器 —— sample_size。
+    #[cfg(test)]
+    pub fn sample_size(&self) -> f64 {
+        self.sample_size
+    }
+
+    /// P2-1: 测试用访问器 —— 树迭代器。
+    #[cfg(test)]
+    pub fn trees_iter(&self) -> &[Tree] {
+        &self.trees
+    }
 }
 
 /// 归一化常数 c(ψ) = 2(ln(ψ-1)+γ) - 2(ψ-1)/ψ,γ = 欧拉常数。
@@ -110,27 +140,126 @@ fn normalization_constant(sample_size: f64) -> f64 {
     2.0 * ((sample_size - 1.0).ln() + gamma) - 2.0 * (sample_size - 1.0) / sample_size
 }
 
-/// 内置模型:合成权重,代表"正常事件隔离路径长、异常事件路径短"。
-/// 由离线 train.py 训练后以二进制权重替换(本文件仅推理,不含训练)。
-/// 每棵树单次分裂:特征值 < 阈值 → 正常(深叶子路径 8),≥ 阈值 → 异常(浅叶子路径 1)。
+/// 内置模型:多级分裂合成权重,代表"正常事件隔离路径长、异常事件路径短"。
+///
+/// P2-1 改进:原先每棵树仅单次分裂(3 节点),精度有限。
+/// 现升级为三级分裂(7 节点/树),覆盖频次+比率+时序三类特征的组合判定,
+/// 显著提升正常/异常样本的隔离路径差异。
+///
+/// 树结构(7 节点):
+/// ```text
+///            [0] root: freq_split
+///           /              \
+///     [1] ratio_split    [2] anomaly_leaf (depth=1)
+///      /         \
+/// [3] deep_leaf  [4] time_split
+/// (depth=5)      /         \
+///           [5] mid_leaf   [6] shallow_leaf
+///           (depth=3)      (depth=2)
+/// ```
+///
+/// 由离线 train.py 训练后以二进制权重替换(见 load_model_from_bytes)。
 pub fn builtin_model() -> IForest {
     let mut trees = Vec::with_capacity(100);
-    for t in 0..100 {
-        // 分裂特征:轮转覆盖特征 0..15(频次/时序组),每棵树 1 个分裂点
-        let f = (t % 16) as u8;
-        // 阈值:特征 0..7 为频次(正常 < 30),8..15 为比率(正常 < 0.4)
-        let threshold = if f < 8 { 30.0f32 } else { 0.4f32 };
+    for t in 0..100u32 {
+        // 主分裂特征:轮转覆盖特征 0..7(频次组)
+        let f0 = (t % 8) as u8;
+        // 次级分裂特征:轮转覆盖特征 8..15(比率组)
+        let f1 = ((t % 8) + 8) as u8;
+        // 三级分裂特征:轮转覆盖特征 16..23(时序组)
+        let f2 = ((t % 8) + 16) as u8;
+
+        // 阈值:频次 < 30,比率 < 0.4,时序 < 0.5
+        let th_freq = 30.0f32;
+        let th_ratio = 0.4f32;
+        let th_time = 0.5f32;
+
         let nodes = vec![
-            // 0:根 —— feature < threshold → 节点1(继续走 8 步深);否则 → 节点2(浅,深度 1)
-            Node { feature_id: f, threshold, left: 1, right: 2, depth: 0 },
-            // 1:正常路径终点(深叶子,深度 8 → 低分)
-            Node { feature_id: 0, threshold: 0.0, left: 0, right: 0, depth: 8 },
+            // 0:根 —— freq < th → 节点1(继续检查比率);否则 → 节点2(异常,浅)
+            Node { feature_id: f0, threshold: th_freq, left: 1, right: 2, depth: 0 },
+            // 1:ratio < th → 节点3(正常,深叶子);否则 → 节点4(继续检查时序)
+            Node { feature_id: f1, threshold: th_ratio, left: 3, right: 4, depth: 0 },
             // 2:异常路径终点(浅叶子,深度 1 → 高分)
             Node { feature_id: 0, threshold: 0.0, left: 0, right: 0, depth: 1 },
+            // 3:正常路径终点(深叶子,深度 5 → 低分)
+            Node { feature_id: 0, threshold: 0.0, left: 0, right: 0, depth: 5 },
+            // 4:time < th → 节点5(中等深度);否则 → 节点6(异常,较浅)
+            Node { feature_id: f2, threshold: th_time, left: 5, right: 6, depth: 0 },
+            // 5:中等异常叶子(深度 3)
+            Node { feature_id: 0, threshold: 0.0, left: 0, right: 0, depth: 3 },
+            // 6:较浅异常叶子(深度 2)
+            Node { feature_id: 0, threshold: 0.0, left: 0, right: 0, depth: 2 },
         ];
         trees.push(Tree { nodes });
     }
     IForest::new(trees, 256.0)
+}
+
+/// P2-1: 从二进制权重加载 Isolation Forest 模型。
+///
+/// 二进制格式(小端):
+/// - [0..4]   magic: b"SGIF"
+/// - [4]      version: 1
+/// - [5..7]   tree_count: u16
+/// - [7..15]  sample_size: f64
+/// - 每棵树:
+///   - [0..2] node_count: u16
+///   - 每个节点(11 字节): feature_id(u8) + threshold(f32) + left(u16) + right(u16) + depth(u16)
+///
+/// 由离线 `train.py` 产出,经 OTA 下发后用此函数加载替换 `builtin_model()`。
+/// 格式不符返回 Err,调用方应回退到 `builtin_model()`。
+pub fn load_model_from_bytes(data: &[u8]) -> Result<IForest, &'static str> {
+    if data.len() < 15 {
+        return Err("model data too short");
+    }
+    if &data[0..4] != b"SGIF" {
+        return Err("bad magic: expected SGIF");
+    }
+    if data[4] != 1 {
+        return Err("unsupported model version");
+    }
+    let tree_count = u16::from_le_bytes([data[5], data[6]]) as usize;
+    if tree_count == 0 || tree_count > 1000 {
+        return Err("invalid tree count");
+    }
+    let sample_size = f64::from_le_bytes([
+        data[7], data[8], data[9], data[10], data[11], data[12], data[13], data[14],
+    ]);
+    if sample_size <= 0.0 {
+        return Err("invalid sample size");
+    }
+
+    let mut trees = Vec::with_capacity(tree_count);
+    let mut offset = 15usize;
+    for _ in 0..tree_count {
+        if offset + 2 > data.len() {
+            return Err("unexpected EOF reading tree header");
+        }
+        let node_count = u16::from_le_bytes([data[offset], data[offset + 1]]) as usize;
+        offset += 2;
+        if node_count == 0 || node_count > 10000 {
+            return Err("invalid node count");
+        }
+        let needed = offset + node_count * 11;
+        if needed > data.len() {
+            return Err("unexpected EOF reading nodes");
+        }
+        let mut nodes = Vec::with_capacity(node_count);
+        for _ in 0..node_count {
+            let base = offset;
+            let feature_id = data[base];
+            let threshold = f32::from_le_bytes([
+                data[base + 1], data[base + 2], data[base + 3], data[base + 4],
+            ]);
+            let left = u16::from_le_bytes([data[base + 5], data[base + 6]]);
+            let right = u16::from_le_bytes([data[base + 7], data[base + 8]]);
+            let depth = u16::from_le_bytes([data[base + 9], data[base + 10]]);
+            nodes.push(Node { feature_id, threshold, left, right, depth });
+            offset += 11;
+        }
+        trees.push(Tree { nodes });
+    }
+    Ok(IForest::new(trees, sample_size))
 }
 
 #[cfg(test)]
@@ -188,5 +317,64 @@ mod tests {
         let model = IForest::new(vec![], 256.0);
         assert_eq!(model.score(&normal_features()), 0.0);
         assert!(!model.should_alert(&normal_features()));
+    }
+
+    /// P2-1: 序列化 builtin_model 为二进制(测试辅助)。
+    fn model_to_bytes(model: &IForest) -> Vec<u8> {
+        let mut buf = Vec::new();
+        buf.extend_from_slice(b"SGIF");
+        buf.push(1); // version
+        buf.extend_from_slice(&(model.trees_count() as u16).to_le_bytes());
+        buf.extend_from_slice(&model.sample_size().to_le_bytes());
+        for tree in model.trees_iter() {
+            buf.extend_from_slice(&(tree.nodes_count() as u16).to_le_bytes());
+            for node in tree.nodes_iter() {
+                buf.push(node.feature_id);
+                buf.extend_from_slice(&node.threshold.to_le_bytes());
+                buf.extend_from_slice(&node.left.to_le_bytes());
+                buf.extend_from_slice(&node.right.to_le_bytes());
+                buf.extend_from_slice(&node.depth.to_le_bytes());
+            }
+        }
+        buf
+    }
+
+    #[test]
+    fn load_model_roundtrip() {
+        // P2-1: 验证 builtin_model 序列化→加载往返保持相同分数。
+        let original = builtin_model();
+        let bytes = model_to_bytes(&original);
+        let loaded = load_model_from_bytes(&bytes).expect("load should succeed");
+
+        let s_normal_orig = original.score(&normal_features());
+        let s_normal_loaded = loaded.score(&normal_features());
+        let s_anom_orig = original.score(&anomaly_features());
+        let s_anom_loaded = loaded.score(&anomaly_features());
+
+        assert!(
+            (s_normal_orig - s_normal_loaded).abs() < 1e-6,
+            "正常样本分数应一致: {s_normal_orig} vs {s_normal_loaded}"
+        );
+        assert!(
+            (s_anom_orig - s_anom_loaded).abs() < 1e-6,
+            "异常样本分数应一致: {s_anom_orig} vs {s_anom_loaded}"
+        );
+    }
+
+    #[test]
+    fn load_model_rejects_invalid_inputs() {
+        // 空数据
+        assert!(load_model_from_bytes(&[]).is_err());
+        // 错误 magic
+        assert!(load_model_from_bytes(b"XXXX").is_err());
+        // 截断数据
+        let mut bad = vec![b'S', b'G', b'I', b'F', 1u8, 1, 0];
+        bad.extend_from_slice(&256.0f64.to_le_bytes());
+        bad.extend_from_slice(&[0, 0]); // node_count=0
+        assert!(load_model_from_bytes(&bad).is_err());
+        // 错误版本
+        let mut bad_ver = vec![b'S', b'G', b'I', b'F', 2u8];
+        bad_ver.extend_from_slice(&[0u8; 10]);
+        assert!(load_model_from_bytes(&bad_ver).is_err());
     }
 }

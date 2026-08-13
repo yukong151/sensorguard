@@ -53,6 +53,10 @@ private val FB_FIXTURE_TICK_INPUT =
         )
         assertEquals(88, buf.size)
         assertEquals(FB_FIXTURE_TICK_INPUT, hex(buf))
+        // ── 过时注释标注 ──────────────────────────────────────────
+        // STALE COMMENT: 下方注释已过时 —— fixture 已在 W9 schema 加 tier 字段后更新,
+        // 88 字节断言已通过(上方 assertEquals)。此行注释保留供历史追溯,不再有效。
+        // 标注日期: 2026-08-13 (P2-4 死代码标注,不删除)
         // assertEquals(FB_FIXTURE_TICK_INPUT, hex(buf)) // W9: schema 加 tier 字段后 fixture 待更新
     }
 

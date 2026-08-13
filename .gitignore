@@ -27,9 +27,12 @@ app-debug.apk
 # Gradle home cache
 .gradle_home/
 
-# OhMyOpenCode �Ự����ʱ�ļ�
+# OhMyOpenCode 会话运行时文件
 .omo/run-continuation/
 
-# AI workbuddy/��Ự��ʱ�ļ�
+# AI workbuddy/о会话临时文件
 .workbuddy/
 .omo/
+
+# AI 辅助生成临时包
+.trae-html-share-packages/

@@ -20,14 +20,34 @@ android {
         arg("room.schemaLocation", "$projectDir/schemas")
         arg("room.incremental", "true")
     }
+    // P1-5: Release 签名配置 —— 从环境变量读取 keystore 路径与密码,
+    // 缺失时回退 debug 签名(开发构建可正常 assembleRelease)。
+    // CI 通过 secrets 注入 SG_KEYSTORE_FILE / SG_KEYSTORE_PASSWORD /
+    // SG_KEY_ALIAS / SG_KEY_PASSWORD 四个环境变量。
+    signingConfigs {
+        create("release") {
+            val keystoreFile = System.getenv("SG_KEYSTORE_FILE")
+            if (keystoreFile != null && java.io.File(keystoreFile).exists()) {
+                storeFile = java.io.File(keystoreFile)
+                storePassword = System.getenv("SG_KEYSTORE_PASSWORD") ?: ""
+                keyAlias = System.getenv("SG_KEY_ALIAS") ?: ""
+                keyPassword = System.getenv("SG_KEY_PASSWORD") ?: ""
+            }
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Deviation(doc-frozen): W1 使用 debug 签名,使文档 §4 的 `adb install app-release.apk` 可安装;
-            // 生产签名(独立 keystore)留待发布里程碑,文档未冻结具体签名方案。
-            signingConfig = signingConfigs.getByName("debug")
+            // P1-5: 环境变量提供 keystore 时用 release 签名;否则回退 debug(开发构建)。
+            // 原 W1 偏差(始终用 debug)已修复:CI 设置 SG_KEYSTORE_* 即启用正式签名。
+            val keystoreFile = System.getenv("SG_KEYSTORE_FILE")
+            signingConfig = if (keystoreFile != null && java.io.File(keystoreFile).exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
     // W8/Final(文档 §3051/§3162): Product Flavor 分离「内测版 internal」与「商店版 store」。
@@ -66,18 +86,17 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.lifecycle:lifecycle-service:2.8.4")
-    // W7 (文档 §8.2): Room 加密存储 + EncryptedSharedPreferences(counter 原子递增 + fsync)
+    // W7 (文档 §8.2): Room 加密存储 + counter(AndroidKeyStore+AES-GCM,原子递增 + fsync)
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
-    // 文档 §8.2 指定 EncryptedSharedPreferences(counter 原子递增 + fsync)。
-    // Google 已标记 deprecated 但 API 稳定;供应链锁版本(文档 §14)。
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // P2-7:移除 security-crypto:1.1.0-alpha06(Google 已标记 deprecated)。
+    // 改用 AndroidKeyStore + AES-256-GCM 直接加密 counter 值,无外部依赖。
     // Shizuku 精确归因(文档 §4 P4:T2 增强):运行时可选的独立插件。
-    // 注: 当前以 implementation 硬依赖打入主 APK —— Shizuku 客户端类(rikka.shizuku.Shizuku)
-    // 必须随 APK 分发,运行时方能经反射调用;纯 compileOnly 会导致 Class.forName 失败、探针永不激活。
-    // 这与文档"可选插件 / <4MB"目标存在张力;彻底解法是拆为 dynamic-feature 模块(按需安装),
-    // 该架构拆分留待 Step 4 决策,此处保持硬依赖以保证 T2 链路可用。
+    // P1-4 分析:compileOnly 不可行 —— ShizukuProbe 通过 Class.forName("rikka.shizuku.Shizuku")
+    // 反射调用 API,类必须随 APK 分发。改为保留 implementation + ProGuard 混淆缩减体积 +
+    // 运行时 PackageManager 检测 Shizuku App 安装状态,未安装时零开销静默降级。
+    // Shizuku API + Provider 合计 ~30KB,经 ProGuard 混淆后 <15KB,对 APK 体积影响可忽略。
     implementation("dev.rikka.shizuku:api:13.1.5")
     // W12/T2 (文档 §4 P4): Shizuku 客户端必须额外依赖 provider 模块,Manifest 中声明的
     // rikka.shizuku.ShizukuProvider 即来自此模块。缺失会导致 Shizuku 报

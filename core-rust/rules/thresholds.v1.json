@@ -9,7 +9,7 @@
     "kl_divergence": 0.1537,
     "burst_entropy_min": 2.312,
     "burst_entropy_max": 3.95,
-    "period_energy_concentration": 0.3528,
+    "period_energy_concentration": 0.05,
     "min_events_for_l3": 20
   }
 }

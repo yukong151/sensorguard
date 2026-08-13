@@ -34,9 +34,12 @@ impl PhaseKind {
     }
 }
 
-/// 事件上下文快照(fbs CtxTag 字段,仅保留 L2 规则谓词所需的子集)。
+/// 事件上下文快照(fbs CtxTag 字段)。
 /// 存"最近一次事件"的上下文,L2 评估在 Batch Tick 用该快照作窗口代表值。
 /// 由 ffi 层从 sg::CtxTag 构造(ffi/mod.rs),保持本模块无 flatbuffers 依赖。
+///
+/// P2-2: 新增 audio_focus / net_egress_anomaly 字段,与 fbs CtxTag 完整对齐。
+/// 当前 L2 规则引擎无对应谓词,预留供 v1.1 侧信道关联规则使用。
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct CtxSnapshot {
     pub fg_state: u8,
@@ -45,6 +48,10 @@ pub struct CtxSnapshot {
     pub intent_hint: bool,
     pub decl_purpose: u8,
     pub system_proxy: bool,
+    /// P2-2: 设备级音频活跃信号(AudioManager.mode != NORMAL 或 isMusicActive)。
+    pub audio_focus: bool,
+    /// P2-2: 网络出端异常标记(NetProbe.lastSuspicious)。
+    pub net_egress_anomaly: bool,
 }
 
 /// (uid, op) 组合键。OpKind 取值 0..=15(文档 fbs),装入低 8 位。
@@ -304,14 +311,26 @@ impl PairWindow {
         self.interval_hist
     }
 
-    /// 复制当前窗口在 24h 内的桶计数(供 KS / KL 计算)。
+    /// 复制当前窗口在 24h 内的桶计数(供 Lomb-Scargle 周期图计算)。
+    ///
+    /// P2-3 修复:原实现仅返回非零计数(filter + map),丢失了桶的时间位置信息,
+    /// 导致 Lomb-Scargle 周期图无法检测周期性。现返回完整 1440 元素时间序列,
+    /// index 0 = 最旧桶(window 边界),index 1439 = 最新桶(now)。
+    /// 零计数桶保留为 0,使周期图能正确识别事件间隔的周期性模式。
     pub fn bucket_counts(&self, now_ns: i64) -> Vec<u32> {
         let now_bucket = (now_ns / BUCKET_NS) as u32;
-        self.slots
-            .iter()
-            .filter(|s| s.count > 0 && now_bucket.saturating_sub(s.bucket) < NUM_BUCKETS as u32)
-            .map(|s| u32::from(s.count))
-            .collect()
+        let mut out = vec![0u32; NUM_BUCKETS];
+        for slot in self.slots.iter() {
+            if slot.count > 0 {
+                let diff = now_bucket.saturating_sub(slot.bucket);
+                if diff < NUM_BUCKETS as u32 {
+                    // diff=0 → 最新桶(index NUM_BUCKETS-1);diff=NUM_BUCKETS-1 → 最旧桶(index 0)
+                    let idx = NUM_BUCKETS - 1 - diff as usize;
+                    out[idx] = u32::from(slot.count);
+                }
+            }
+        }
+        out
     }
 
     /// 每窗口静态大小(含对齐)。新增 L2 状态:pending_start_ns(8B) +
@@ -573,6 +592,8 @@ mod tests {
             intent_hint: false,
             decl_purpose: 0,
             system_proxy: false,
+            audio_focus: false,
+            net_egress_anomaly: false,
         };
         let ctx_b = CtxSnapshot {
             fg_state: 0,
@@ -581,6 +602,8 @@ mod tests {
             intent_hint: true,
             decl_purpose: 4,
             system_proxy: false,
+            audio_focus: true,
+            net_egress_anomaly: false,
         };
         w.record_ctx(t0, PhaseKind::Start, ctx_a);
         assert_eq!(w.ctx_snapshot(), ctx_a);

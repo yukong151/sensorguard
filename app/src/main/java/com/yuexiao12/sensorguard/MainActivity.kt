@@ -81,23 +81,29 @@ class MainActivity : AppCompatActivity() {
 
         // 真机压测入口:测量 sgPushSensor 纯标量 JNI 往返延迟(mean/P99/max)。
         // 覆盖 ring CAP=4096 前 2200 次均为 E_OK;超限 E_RESOURCE 属预期反压。
-        binding.btnPressure.setOnClickListener {
-            Thread {
-                for (i in 0 until 200) SgNative.sgPushSensor(SystemClock.elapsedRealtimeNanos(), 10, 0f, 0f, 0f)
-                val n = 2000
-                val times = LongArray(n)
-                var ok = 0
-                for (i in 0 until n) {
-                    val t0 = System.nanoTime()
-                    val rc = SgNative.sgPushSensor(SystemClock.elapsedRealtimeNanos(), 10, 0f, 0f, 0f)
-                    times[i] = System.nanoTime() - t0
-                    if (rc == 0) ok++
-                }
-                times.sort()
-                val p99idx = (n * 0.99).toInt().coerceAtMost(n - 1)
-                val mean = times.average() / 1000.0
-                Log.i("SG-PTEST", "n=$n ok=$ok mean=${"%.1f".format(mean)}us p99=${times[p99idx]/1000}us max=${times[n-1]/1000}us")
-            }.start()
+        // P2-5: release 构建中隐藏压测入口,仅 debug 可用。
+        if (BuildConfig.DEBUG) {
+            binding.btnPressure.visibility = View.VISIBLE
+            binding.btnPressure.setOnClickListener {
+                Thread {
+                    for (i in 0 until 200) SgNative.sgPushSensor(SystemClock.elapsedRealtimeNanos(), 10, 0f, 0f, 0f)
+                    val n = 2000
+                    val times = LongArray(n)
+                    var ok = 0
+                    for (i in 0 until n) {
+                        val t0 = System.nanoTime()
+                        val rc = SgNative.sgPushSensor(SystemClock.elapsedRealtimeNanos(), 10, 0f, 0f, 0f)
+                        times[i] = System.nanoTime() - t0
+                        if (rc == 0) ok++
+                    }
+                    times.sort()
+                    val p99idx = (n * 0.99).toInt().coerceAtMost(n - 1)
+                    val mean = times.average() / 1000.0
+                    Log.i("SG-PTEST", "n=$n ok=$ok mean=${"%.1f".format(mean)}us p99=${times[p99idx]/1000}us max=${times[n-1]/1000}us")
+                }.start()
+            }
+        } else {
+            binding.btnPressure.visibility = View.GONE
         }
 
         // W8 (Debug 演示):注入演示告警 → 跳转时间线,人工点击告警行验证 A2→A3 链路。

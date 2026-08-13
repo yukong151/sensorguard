@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.yuexiao12.sensorguard.crypto.KeychainEntry
 import com.yuexiao12.sensorguard.crypto.KeychainStore
 import com.yuexiao12.sensorguard.store.EventRow
@@ -12,25 +14,45 @@ import com.yuexiao12.sensorguard.store.EventSink
 /**
  * W7 (文档 §8.1):Room 数据库。
  *
- * - version=1,exportSchema=true: schema JSON 写入 app/schemas/ 提交入库(ksp 配置),
+ * - version=2,exportSchema=true: schema JSON 写入 app/schemas/ 提交入库(ksp 配置),
  *   PR 变表必须提供 migration(文档 §8.1 + CI 门禁)。
  * - 单例:App 为单进程常驻服务(GuardService),无需多进程访问。
+ *
+ * P2-6: version 1→2 新增 attribution 表(pkg_hash_hex, pkg_name, uid, first_seen_ms),
+ * 用于持久化 uid→包名映射,使设备重启后仍可解析告警/事件时间线上的包指纹归属。
  */
 @Database(
-    entities = [EventEntity::class, KeychainEntity::class],
-    version = 1,
+    entities = [EventEntity::class, KeychainEntity::class, AttributionEntity::class],
+    version = 2,
     exportSchema = true,
 )
 abstract class SgDb : RoomDatabase() {
     abstract fun eventDao(): EventDao
     abstract fun keychainDao(): KeychainDao
+    abstract fun attributionDao(): AttributionDao
 
     companion object {
         @Volatile private var instance: SgDb? = null
 
+        /** P2-6: v1→v2 migration —— 新建 attribution 表。*/
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `attribution` (
+                        `pkgHashHex` TEXT NOT NULL,
+                        `pkgName` TEXT NOT NULL,
+                        `uid` INTEGER NOT NULL,
+                        `firstSeenMs` INTEGER NOT NULL,
+                        PRIMARY KEY(`pkgHashHex`)
+                    )""".trimIndent()
+                )
+            }
+        }
+
         fun get(context: Context): SgDb = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, SgDb::class.java, "sg.db")
                 // 文档 §8.1:变表必须 migration;默认(无 fallback)即禁止破坏性回退
+                .addMigrations(MIGRATION_1_2)
                 .build()
                 .also { instance = it }
         }

@@ -10,6 +10,12 @@ object SgNative {
      *  out 容量需 ≥ 256 字节;返回值为有效长度(<0 为错误码,SgErrors 同义)。*/
     external fun sgSensorHealth(out: ByteArray): Int
     external fun sgTick(input: ByteArray, out: ByteArray): Int   // 返回 >=0 为 out 有效长度, <0 为错误码
+    // ── 死代码标注 ──────────────────────────────────────────────
+    // DEAD CODE: sgSnapshot 声明为 external 但全代码库无任何调用。
+    // Rust FFI 层提供了对应的 native 实现但 Kotlin 侧从未调用。
+    // 保留原因:后续可能用于调试快照导出(如 batch tick 前后状态对比)。
+    // 清理建议:确认无使用计划后可删除此声明 + Rust 侧对应实现。
+    // 标注日期: 2026-08-13 (P2-4 死代码标注,不删除)
     external fun sgSnapshot(out: ByteArray): Int
     external fun sgShutdown(): Int
 

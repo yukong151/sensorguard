@@ -97,8 +97,14 @@ class GuardService : Service() {
     /** W12/T2:上次 Shizuku 轮询快照(uid:op -> client),用于 diff 推 START/STOP/TICK。*/
     private val shizukuLast = ConcurrentHashMap<String, SensorServiceParser.SensorClient>()
 
-    /** W12/T2: 包指纹(hex) -> (内层包名, uid) 反向映射,供 UI 在告警/事件上做归属展示(仅内存,会话级)。*/
+    /**
+     * W12/T2: 包指纹(hex) -> (内层包名, uid) 反向映射,供 UI 在告警/事件上做归属展示。
+     * P2-6: 启动时从 Room attribution 表加载,运行时新映射同步写入 Room(跨重启持久化)。
+     */
     private val pkgHashInfo = ConcurrentHashMap<String, Pair<String, Int>>()
+
+    /** P2-6: 归因映射 DAO,持久化 uid→包名映射到 Room。*/
+    private var attributionDao: com.yuexiao12.sensorguard.db.AttributionDao? = null
 
     private val probeSink = object : ProbeSink {
         override fun onProbeEvent(ev: ProbeEvent) = pushProbeEvent(ev)
@@ -132,7 +138,7 @@ class GuardService : Service() {
         scheduler.scheduleWithFixedDelay(::destroyExpiredDek, 1, 24, TimeUnit.HOURS)
 
         // W7 (文档 §8.2):加密事件存储 —— KEK(AndroidKeyStore,StrongBox 优先)+ DEK 编排 +
-        // keychain(Room)+ counter(EncryptedSharedPreferences)+ 唯一性守卫。
+        // keychain(Room)+ counter(AndroidKeyStore+AES-GCM)+ 唯一性守卫。
         val db = SgDb.get(this)
         eventStore = EncryptedEventStore(
             dekManager = DekManager(
@@ -143,6 +149,20 @@ class GuardService : Service() {
             ),
             sink = RoomEventSink(db.eventDao()),
         )
+
+        // P2-6: 初始化归因 DAO,从 Room 加载持久化的 uid→包名映射到内存。
+        // 在探针启动前完成,确保首批事件即可命中已有映射(UI 归因不闪烁)。
+        attributionDao = db.attributionDao()
+        try {
+            for (row in attributionDao!!.all()) {
+                pkgHashInfo[row.pkgHashHex] = Pair(row.pkgName, row.uid)
+            }
+            if (pkgHashInfo.isNotEmpty()) {
+                Log.i("SG", "attribution: loaded ${pkgHashInfo.size} entries from Room")
+            }
+        } catch (e: Exception) {
+            Log.w("SG", "attribution: load from Room failed", e)
+        }
 
         // W4: 启动探针(公开 API 等效替代 AppOps 监听,见各探针注释)
         instance = this
@@ -158,11 +178,18 @@ class GuardService : Service() {
             .also { it.start(probeSink) }
         // P4-8: 网络流量统计(仅日志审计,不告警)
         netProbe = NetProbe(this).also { it.start(probeSink) }
+        // P2-2: 注入 NetProbe 引用,供 CtxProbe.snapshot 读取 netEgressAnomaly
+        CtxProbe.setNetProbe(netProbe)
         // W12 (文档 §4 P4):Shizuku 精确归因 —— 启用以 ADB 权限读取 dumpsys sensorservice,
         // 获取精确 uid+采样率,覆盖 AppOps 探针无法归因的 IMU 类传感器盲区。
         // start() 内部注册权限/binder 监听器并请求授权: 晚授权(用户在 Shizuku 内手动授予)
         // 或 Shizuku 重启时,监听器回调会自动激活探针(Step 3 打磨)。
-        shizukuProbe = ShizukuProbe { onShizukuClients(it) }.also { it.start() }
+        // P1-4:先检测 Shizuku App 是否安装,未安装时跳过探针创建(零开销降级)。
+        if (ShizukuProbe.isShizukuInstalled(this)) {
+            shizukuProbe = ShizukuProbe { onShizukuClients(it) }.also { it.start() }
+        } else {
+            Log.i("SG", "Shizuku not installed, T2 probe disabled (graceful degradation)")
+        }
         // W5 (文档 §5.2):传感器基线探针 —— accel/gyro/mag/light/prox 自采 ~50Hz,
         // 经 sg_push_sensor 注入 Rust RING,由 Batch Tick(sg_tick)消费做 HAL 竞争 KS 推断。
         sensorBaselineProbe = SensorBaselineProbe(this).also { it.start(probeSink) }
@@ -222,11 +249,27 @@ class GuardService : Service() {
             eventLog.addLast(ev)
             while (eventLog.size > EVENT_LOG_CAP) eventLog.removeFirst()
         }
-        // W12/T2: 维护 包指纹 -> (内层包名, uid) 反向映射,供 UI 归因展示(仅内存)。
-        pkgHashInfo[pkgHex(ev.pkgHash)] = Pair(ev.pkgName ?: "", ev.uid)
+        // W12/T2: 维护 包指纹 -> (内层包名, uid) 反向映射,供 UI 归因展示。
+        // P2-6: 新映射同步写入 Room(跨重启持久化);已存在则 IGNORE 跳过。
+        val hex = pkgHex(ev.pkgHash)
+        if (hex !in pkgHashInfo) {
+            pkgHashInfo[hex] = Pair(ev.pkgName ?: "", ev.uid)
+            try {
+                attributionDao?.insertIfAbsent(
+                    com.yuexiao12.sensorguard.db.AttributionEntity(
+                        pkgHashHex = hex,
+                        pkgName = ev.pkgName ?: "",
+                        uid = ev.uid,
+                        firstSeenMs = System.currentTimeMillis(),
+                    )
+                )
+            } catch (e: Exception) {
+                Log.w("SG", "attribution: persist failed for $hex", e)
+            }
+        }
         val opEv = OpEventData(
             ev.tsNs, ev.uid, ev.pkgHash, ev.op, ev.phase,
-            CtxProbe.snapshot(ev.uid, ev.pkgName), ev.samplingPeriodUs,
+            CtxProbe.snapshot(ev.uid, ev.pkgName, ev.op), ev.samplingPeriodUs,
         )
         val rc = runCatching { SgNative.sgPushOp(FbSerde.encodeOpEvent(opEv)) }
             .getOrDefault(SgErrors.E_PANIC)
@@ -478,6 +521,14 @@ class GuardService : Service() {
 
     private fun handleVerdicts(batch: VerdictBatchData) {
         for (v in batch.verdicts) {
+            // P0-2:Kotlin 侧二次过滤 —— 即使 Rust 引擎已通过 decl_purpose_not_in 谓词
+            // 排除了 FITNESS/NAVIGATION,此处再做一层防御性检查:
+            // 若 OBSERVE 级别且目标 App 声明了合法传感器用途,则抑制(不进告警日志)。
+            if (v.kind == SgEnum.VERDICT_OBSERVE && shouldSuppressObserve(v)) {
+                Log.d("SG", "suppressed OBSERVE rule=${v.ruleId} op=${v.op} " +
+                    "pkg=${pkgHex(v.pkgHash).take(8)} (legitimate purpose)")
+                continue
+            }
             val upgraded = upgradeAbuseVerdict(v)
             pushAlert(upgraded)
             if (upgraded.severity >= SEVERITY_CRITICAL) {
@@ -485,6 +536,40 @@ class GuardService : Service() {
             }
         }
     }
+
+    /**
+     * P0-2:判定 OBSERVE 级别告警是否应被抑制。
+     *
+     * 防御性二次过滤:Rust 引擎已通过 R112 的 decl_purpose_not_in 谓词排除
+     * FITNESS(2)/NAVIGATION(3) 用途的 App。但若 DeclPurposeClassifier
+     * 分类失败(返回 UNKNOWN=0,如 App 无 declared permissions 或 PackageManager
+     * 查询失败),Rust 侧仍可能触发 OBSERVE。此处通过包名模式匹配做兜底。
+     */
+    private fun shouldSuppressObserve(v: VerdictEntryData): Boolean {
+        // 仅对 ACCEL/GYRO 的侧信道规则抑制(R112)
+        if (v.op != SgEnum.OP_ACCEL && v.op != SgEnum.OP_GYRO) return false
+        if (v.category != SgEnum.CAT_SIDE_CHANNEL) return false
+        val info = attributionFor(pkgHex(v.pkgHash)) ?: return false
+        val pkg = info.first
+        // 已知合法运动/健康/导航 App 包名模式(DeclPurposeClassifier 兜底)
+        return LEGIT_SENSOR_APP_PATTERNS.any { pkg.contains(it) }
+    }
+
+    /** P0-2:已知合法使用 ACCEL/GYRO 的 App 包名子串模式(DeclPurposeClassifier 分类失败时的兜底)。*/
+    private val LEGIT_SENSOR_APP_PATTERNS = listOf(
+        // 运动/健康
+        "com.strava",                           // Strava
+        "com.nike.plus",                        // Nike Run Club
+        "com.mapmyrun",                         // MapMyRun
+        "com.fitbit",                           // Fitbit
+        "com.xiaomi.hm.health",                 // 小米运动健康
+        "com.ct.client",                        // 悦跑圈
+        "com.keep",                             // Keep
+        // 导航
+        "com.autonavi.amapauto",                // 高德地图
+        "com.baidu.BaiduMap",                   // 百度地图
+        "com.google.android.apps.maps",         // Google Maps
+    )
 
     /** P0-1:摇一摇/广告 SDK 滥用升级——ACCEL/GYRO 的 OBSERVE 提升为 ALERT(SIDE_CHANNEL)。*/
     private fun upgradeAbuseVerdict(v: VerdictEntryData): VerdictEntryData {
@@ -602,10 +687,15 @@ class GuardService : Service() {
 
     /** W7 (文档 §8.2):遗忘权 —— 销毁全部 DEK 包裹密钥 + 清空密文,历史记录不可再读。
      * 由 UI("擦除全部日志")在后台线程调用。Safe Mode 下同样可执行(DekManager.wipeAll 幂等)。
+     * P2-6: 同时清空 attribution 归因映射(内存 + Room)。
      */
     fun wipeAllLogs() {
         runCatching { eventStore.wipeAll() }
             .onFailure { Log.e("SG", "wipeAllLogs failed", it) }
+        // P2-6: 清空归因映射
+        pkgHashInfo.clear()
+        runCatching { attributionDao?.clearAll() }
+            .onFailure { Log.w("SG", "attribution clearAll failed", it) }
     }
 
     /** W7 (文档 §10):系统健康度 SAFE_MODE 查询(UI 展示)。*/

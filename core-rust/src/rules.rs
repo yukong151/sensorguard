@@ -114,6 +114,10 @@ pub struct EvalContext {
     pub power_state: bool,
     pub intent_hint: bool,
     pub system_proxy: bool,
+    /// P2-2: 设备级音频活跃信号(预留,v1.1 侧信道关联规则可用)。
+    pub audio_focus: bool,
+    /// P2-2: 网络出端异常标记(预留,v1.1 侧信道+回传关联规则可用)。
+    pub net_egress_anomaly: bool,
     pub count_in_window: HashMap<u32, u32>,
     // L3 产出,Batch A 阶段全部为 None
     pub ks_d: Option<f32>,
@@ -569,6 +573,10 @@ pub fn builtin_rules() -> Vec<Rule> {
                 // 系统组件不再触发此 OBSERVE 规则(普通 App 仍正常观察)。
                 Predicate::OpIn(vec![ops::ACCEL, ops::GYRO]),
                 Predicate::SystemProxyEquals(false),
+                // P0-2 修复:健身类(FITNESS=2)与导航类(NAVIGATION=3)App 合法使用
+                // ACCEL/GYRO(计步器、航位推算等),其 declared permissions 已声明对应传感器。
+                // 排除这两类用途,消除对合法运动/导航 App 的误报。
+                Predicate::DeclPurposeNotIn(vec![2, 3]),
             ],
             // count_p99_multiple 由 Fast Tick 触发条件在引擎外表达(§5.3);
             // 此处以 always-match 占位,ffi 层仅在 Fast Tick 触发时调用。
@@ -718,6 +726,8 @@ mod tests {
             power_state: false,
             intent_hint: false,
             system_proxy: false,
+            audio_focus: false,
+            net_egress_anomaly: false,
             count_in_window: HashMap::new(),
             ks_d: None,
             burst_entropy: None,

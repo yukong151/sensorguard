@@ -347,8 +347,23 @@ class ShizukuProbe(
     companion object {
         private const val SHIZUKU_REQUEST_CODE = 10001
         private const val DUMPSYS_TIMEOUT_MS = 15_000L
+        private const val SHIZUKU_PACKAGE = "moe.shizuku.privileged.api"
         private val SHIZUKU_CLASS by lazy {
             try { Class.forName("rikka.shizuku.Shizuku") } catch (_: Exception) { null }
+        }
+
+        /**
+         * P1-4:检测 Shizuku App 是否已安装(PackageManager 查询)。
+         * 比 Class.forName + pingBinder 更轻量,无需加载 Shizuku 类即可判断。
+         * GuardService 据此决定是否创建 ShizukuProbe,未安装时零开销。
+         */
+        fun isShizukuInstalled(context: android.content.Context): Boolean {
+            return try {
+                context.packageManager.getPackageInfo(SHIZUKU_PACKAGE, 0)
+                true
+            } catch (_: android.content.pm.PackageManager.NameNotFoundException) {
+                false
+            }
         }
     }
 }

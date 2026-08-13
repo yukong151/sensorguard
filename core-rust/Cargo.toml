@@ -23,6 +23,10 @@ strip = true
 [dependencies]
 flatbuffers = "25.12.19"
 once_cell = "1.19"
+# P1-3: Ed25519 签名验证(OTA 规则更新安全通道)。
+# 仅启用 verify 能力(不需要 rand_core/signing),编译后增量约 20-30KB。
+# opt-level="z" + lto 后实际增量更小,可接受。
+ed25519-dalek = { version = "2.1", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 criterion = "0.8.2"
