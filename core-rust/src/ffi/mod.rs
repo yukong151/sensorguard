@@ -767,8 +767,9 @@ vb.add_evidence_tier(sg::EvidenceTier::T0_BASIC);
     #[test]
     fn init_push_shutdown_ok() {
         // 独占串行锁;此测试特意验证"未 init 前拒绝",不能预先 init。
-        let _guard = TEST_LOCK.lock().unwrap();
-        WINDOWS.lock().unwrap().clear();
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        WINDOWS.lock().unwrap_or_else(|e| e.into_inner()).clear();
+        while RING.pop().is_some() {} // 清空 RING,避免前序测试残留致 E_RESOURCE
         sg_shutdown();
         // state 路径:未 init 前,入口一律拒绝
         assert_eq!(sg_tick(null(), 0, null_mut(), 0, null_mut()), E_STATE);
@@ -1052,9 +1053,9 @@ vb.add_evidence_tier(sg::EvidenceTier::T0_BASIC);
     #[test]
     fn sensor_health_not_ready_rejected() {
         // 独占:未 init 前 sg_sensor_health 必须拒绝
-        let _guard = TEST_LOCK.lock().unwrap();
-        WINDOWS.lock().unwrap().clear();
-        SENSOR_BASELINE.lock().unwrap().reset();
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        WINDOWS.lock().unwrap_or_else(|e| e.into_inner()).clear();
+        SENSOR_BASELINE.lock().unwrap_or_else(|e| e.into_inner()).reset();
         while RING.pop().is_some() {}
         sg_shutdown();
         let mut out = vec![0u8; 64];
