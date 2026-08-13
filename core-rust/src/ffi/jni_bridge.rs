@@ -69,7 +69,7 @@ unsafe fn table(env: *mut JNIEnv) -> &'static JNINativeInterface {
 // ---- JNI 桥接入口(符号名 = JNI 规范命名) ----
 
 #[no_mangle]
-pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgInit(
+pub extern "C" fn Java_com_yuexiao12_sensorguard_jni_SgNative_sgInit(
     env: *mut JNIEnv,
     _this: JObject,
     cfg: JByteArray,
@@ -92,7 +92,7 @@ pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgInit(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgPushSensor(
+pub extern "C" fn Java_com_yuexiao12_sensorguard_jni_SgNative_sgPushSensor(
     _env: *mut JNIEnv,
     _this: JObject,
     ts_ns: JLong,
@@ -106,7 +106,7 @@ pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgPushSensor(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgPushOp(
+pub extern "C" fn Java_com_yuexiao12_sensorguard_jni_SgNative_sgPushOp(
     env: *mut JNIEnv,
     _this: JObject,
     buf: JByteArray,
@@ -129,7 +129,7 @@ pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgPushOp(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgTick(
+pub extern "C" fn Java_com_yuexiao12_sensorguard_jni_SgNative_sgTick(
     env: *mut JNIEnv,
     _this: JObject,
     input: JByteArray,
@@ -171,7 +171,7 @@ pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgTick(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgSnapshot(
+pub extern "C" fn Java_com_yuexiao12_sensorguard_jni_SgNative_sgSnapshot(
     env: *mut JNIEnv,
     _this: JObject,
     out: JByteArray,
@@ -196,7 +196,7 @@ pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgSnapshot(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgShutdown(
+pub extern "C" fn Java_com_yuexiao12_sensorguard_jni_SgNative_sgShutdown(
     _env: *mut JNIEnv,
     _this: JObject,
 ) -> JInt {
@@ -204,7 +204,7 @@ pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgShutdown(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgSensorHealth(
+pub extern "C" fn Java_com_yuexiao12_sensorguard_jni_SgNative_sgSensorHealth(
     env: *mut JNIEnv,
     _this: JObject,
     out: JByteArray,
