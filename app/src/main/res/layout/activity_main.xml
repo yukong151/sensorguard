@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W8 (文档 §3): A1 实时仪表盘 —— 系统健康度 + 加密存储状态 + 入口(功能型 UI,无 Compose) -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ui_title_dashboard"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvHealthLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/ui_health_label"
+            android:textSize="14sp" />
+
+        <!-- W8 (文档 §10): 健康度 UI 措辞与日志严格分离,状态色区分 -->
+        <TextView
+            android:id="@+id/tvHealthValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ui_health_ok"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#2E7D32" />
+
+        <TextView
+            android:id="@+id/tvStorageLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/ui_storage_label"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvStorageValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ui_storage_ok"
+            android:textSize="20sp"
+            android:textColor="#2E7D32" />
+
+        <TextView
+            android:id="@+id/tvCounts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textSize="13sp"
+            tools:ignore="MissingDefaultResource"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:text="@string/ui_event_counts" />
+
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="@string/ui_btn_start" />
+
+        <Button
+            android:id="@+id/btnTimeline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/ui_btn_timeline" />
+
+        <!-- W8 (文档 §5/§8): 导出记录(本地) —— 用户主动触发,明文脱敏、不出端 -->
+        <Button
+            android:id="@+id/btnExport"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/ui_btn_export" />
+
+        <Button
+            android:id="@+id/btnPressure"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/ui_btn_pressure" />
+
+        <!-- W8 (Debug 演示):注入演示告警,验证 A2→A3 链路。Release 构建不显示(代码按 BuildConfig.DEBUG 置 VISIBLE) -->
+        <Button
+            android:id="@+id/btnDemoAlert"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            android:text="@string/ui_btn_demo_alert" />
+    </LinearLayout>
+</ScrollView>

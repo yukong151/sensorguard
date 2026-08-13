@@ -1,0 +1,32 @@
+[package]
+name = "sensorguard"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+name = "sensorguard"
+# W2 偏差: 加 rlib — benches/criterion 需要链接 lib 目标。
+# cdylib 供 Android JNI 加载;rlib 供 host 侧 bench 引用,二者并存无冲突。
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+# W1 偏差: panic = "unwind" (冻结文档写 panic="abort")
+# 依据: §4.2 强制要求每个 JNI 入口用 catch_unwind 包裹并将 panic 转 -6 + Safe Mode。
+# panic="abort" 会使 catch_unwind 编译为 no-op,-6 错误路径彻底失效,与契约矛盾。
+# 契约优先(§4.2 > Cargo profile),故改为 unwind。见 W1 偏差报告。
+panic = "unwind"
+strip = true
+
+[dependencies]
+flatbuffers = "25.12.19"
+once_cell = "1.19"
+
+[dev-dependencies]
+criterion = "0.8.2"
+
+[[bench]]
+name = "bench"
+harness = false

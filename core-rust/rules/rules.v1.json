@@ -1,0 +1,287 @@
+[
+  {
+    "id": 101,
+    "category": "out_of_scope",
+    "kind": "alert",
+    "severity": 75,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 900, "min_hits": 3, "cool_down_s": 1800 },
+    "predicates": [
+      { "op_equals": 0 },
+      { "duration_lt_ms": 800 },
+      { "interval_lt_ms": 60000 },
+      { "count_in_window_gte": { "window_s": 300, "gte": 5 } },
+      { "fg_state_equals": 2 },
+      { "user_present_equals": false }
+    ]
+  },
+  {
+    "id": 102,
+    "category": "out_of_scope",
+    "kind": "alert",
+    "severity": 60,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 1800, "min_hits": 2, "cool_down_s": 3600 },
+    "predicates": [
+      { "op_equals": 0 },
+      { "decl_purpose_in": [0] },
+      { "count_in_window_gte": { "window_s": 3600, "gte": 3 } },
+      { "system_proxy_equals": false }
+    ]
+  },
+  {
+    "id": 103,
+    "category": "stealth_hours",
+    "kind": "alert",
+    "severity": 85,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 900, "min_hits": 1, "cool_down_s": 1800 },
+    "predicates": [
+      { "op_equals": 0 },
+      { "user_present_equals": false },
+      { "power_state_equals": false },
+      { "duration_gt_ms": 3000 }
+    ]
+  },
+  {
+    "id": 104,
+    "category": "out_of_scope",
+    "kind": "alert",
+    "severity": 70,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 900, "min_hits": 2, "cool_down_s": 1800 },
+    "predicates": [
+      { "op_equals": 1 },
+      { "decl_purpose_in": [0, 3, 4] },
+      { "duration_gt_ms": 2000 },
+      { "intent_hint_equals": false }
+    ]
+  },
+  {
+    "id": 105,
+    "category": "stealth_hours",
+    "kind": "alert",
+    "severity": 90,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 900, "min_hits": 1, "cool_down_s": 1800 },
+    "predicates": [
+      { "op_equals": 1 },
+      { "user_present_equals": false },
+      { "fg_state_equals": 2 }
+    ]
+  },
+  {
+    "id": 106,
+    "category": "out_of_scope",
+    "kind": "alert",
+    "severity": 55,
+    "min_tier": 1,
+    "batch": "A",
+    "debounce": { "window_s": 1800, "min_hits": 3, "cool_down_s": 3600 },
+    "predicates": [
+      { "op_equals": 2 },
+      { "decl_purpose_in": [0, 1, 2] },
+      { "count_in_window_gte": { "window_s": 3600, "gte": 10 } },
+      { "fg_state_equals": 2 }
+    ]
+  },
+  {
+    "id": 107,
+    "category": "stealth_hours",
+    "kind": "alert",
+    "severity": 50,
+    "min_tier": 1,
+    "batch": "A",
+    "debounce": { "window_s": 1800, "min_hits": 2, "cool_down_s": 3600 },
+    "predicates": [
+      { "op_equals": 2 },
+      { "user_present_equals": false },
+      { "count_in_window_gte": { "window_s": 3600, "gte": 6 } }
+    ]
+  },
+  {
+    "id": 108,
+    "category": "side_channel",
+    "kind": "alert",
+    "severity": 80,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 900, "min_hits": 1, "cool_down_s": 1800 },
+    "predicates": [
+      { "op_in": [10, 11] },
+      { "sample_rate_gte": 200.0 },
+      { "duration_gt_ms": 30000 },
+      { "decl_purpose_not_in": [2, 5, 3] }
+    ]
+  },
+  {
+    "id": 109,
+    "category": "stealth_hours",
+    "kind": "alert",
+    "severity": 65,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 900, "min_hits": 2, "cool_down_s": 1800 },
+    "predicates": [
+      { "op_in": [10, 11] },
+      { "user_present_equals": false },
+      { "sample_rate_gte": 50.0 },
+      { "duration_gt_ms": 60000 }
+    ]
+  },
+  {
+    "id": 110,
+    "category": "side_channel",
+    "kind": "alert",
+    "severity": 70,
+    "min_tier": 0,
+    "batch": "B",
+    "debounce": { "window_s": 900, "min_hits": 2, "cool_down_s": 1800 },
+    "predicates": [
+      { "op_in": [10, 11] },
+      { "burst_entropy_between": [2.5, 4.5] },
+      { "ks_d_gt": 0.18 },
+      { "decl_purpose_not_in": [2, 5, 3] }
+    ]
+  },
+  {
+    "id": 111,
+    "category": "side_channel",
+    "kind": "alert",
+    "severity": 85,
+    "min_tier": 1,
+    "batch": "B",
+    "debounce": { "window_s": 900, "min_hits": 1, "cool_down_s": 1800 },
+    "predicates": [
+      { "op_in": [10, 11] },
+      { "sample_rate_gte": 100.0 },
+      { "coupled_op_ratio_gte": { "coupled_op": 0, "ratio": 0.3 } }
+    ]
+  },
+  {
+    "id": 112,
+    "category": "side_channel",
+    "kind": "observe",
+    "severity": 40,
+    "min_tier": 0,
+    "batch": "B",
+    "debounce": { "window_s": 300, "min_hits": 1, "cool_down_s": 900 },
+    "predicates": [
+      { "op_in": [10, 11] },
+      { "system_proxy_equals": false }
+    ]
+  },
+  {
+    "id": 113,
+    "category": "fingerprint",
+    "kind": "alert",
+    "severity": 55,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 1800, "min_hits": 3, "cool_down_s": 3600 },
+    "predicates": [
+      { "op_equals": 12 },
+      { "sample_rate_gte": 20.0 },
+      { "decl_purpose_not_in": [4, 2] }
+    ]
+  },
+  {
+    "id": 114,
+    "category": "fingerprint",
+    "kind": "alert",
+    "severity": 45,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 1800, "min_hits": 2, "cool_down_s": 3600 },
+    "predicates": [
+      { "op_equals": 12 },
+      { "user_present_equals": false },
+      { "duration_gt_ms": 60000 }
+    ]
+  },
+  {
+    "id": 115,
+    "category": "fingerprint",
+    "kind": "alert",
+    "severity": 60,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 1800, "min_hits": 2, "cool_down_s": 3600 },
+    "predicates": [
+      { "op_equals": 14 },
+      { "interval_lt_ms": 50 }
+    ]
+  },
+  {
+    "id": 116,
+    "category": "fingerprint",
+    "kind": "observe",
+    "severity": 35,
+    "min_tier": 0,
+    "batch": "A",
+    "debounce": { "window_s": 1800, "min_hits": 3, "cool_down_s": 3600 },
+    "predicates": [
+      { "op_equals": 13 },
+      { "sample_rate_gte": 10.0 },
+      { "decl_purpose_not_in": [3, 4] }
+    ]
+  },
+  {
+    "id": 117,
+    "category": "out_of_scope",
+    "kind": "alert",
+    "severity": 45,
+    "min_tier": 1,
+    "batch": "A",
+    "debounce": { "window_s": 1800, "min_hits": 2, "cool_down_s": 3600 },
+    "predicates": [
+      { "op_equals": 2 },
+      { "count_in_window_gte": { "window_s": 600, "gte": 20 } }
+    ]
+  },
+  {
+    "id": 118,
+    "category": "stealth_hours",
+    "kind": "alert",
+    "severity": 40,
+    "min_tier": 1,
+    "batch": "A",
+    "debounce": { "window_s": 1800, "min_hits": 2, "cool_down_s": 3600 },
+    "predicates": [
+      { "count_in_window_gte": { "window_s": 600, "gte": 10 } },
+      { "user_present_equals": false }
+    ]
+  },
+  {
+    "id": 119,
+    "category": "fingerprint",
+    "kind": "alert",
+    "severity": 50,
+    "min_tier": 1,
+    "batch": "B",
+    "debounce": { "window_s": 3600, "min_hits": 2, "cool_down_s": 7200 },
+    "predicates": [
+      { "count_in_window_gte": { "window_s": 3600, "gte": 30 } },
+      { "count_in_window_gte": { "window_s": 3600, "gte": 15 } },
+      { "decl_purpose_not_in": [4] }
+    ]
+  },
+  {
+    "id": 120,
+    "category": "side_channel",
+    "kind": "alert",
+    "severity": 78,
+    "min_tier": 1,
+    "batch": "B",
+    "debounce": { "window_s": 900, "min_hits": 1, "cool_down_s": 1800 },
+    "predicates": [
+      { "distinct_sensitive_ops_gte": { "window_s": 60, "gte": 3 } },
+      { "user_present_equals": false }
+    ]
+  }
+]

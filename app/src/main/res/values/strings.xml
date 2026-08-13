@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">SensorGuard</string>
+
+    <!-- 通知 -->
+    <string name="notif_channel">隐私监测</string>
+    <string name="notif_text">隐私监测运行中</string>
+    <string name="notif_critical_channel">严重告警</string>
+    <string name="notif_critical_title">SensorGuard 严重告警</string>
+    <string name="notif_summary_title">SensorGuard 每日摘要</string>
+    <string name="notif_summary_text" formatted="false">今日探针事件 %1$d 条,告警 %2$d 条,严重 %3$d 条</string>
+
+    <!-- W8 UI 三屏(文档 §3/§10): 中文文案,与日志措辞严格分离 -->
+    <string name="ui_health_label">系统健康度</string>
+    <string name="ui_health_ok">良好</string>
+    <string name="ui_health_degraded">功能降级</string>
+    <string name="ui_health_safe">安全模式</string>
+    <string name="ui_health_dead">已终止</string>
+    <string name="ui_storage_label">加密存储</string>
+    <string name="ui_storage_ok">正常</string>
+    <string name="ui_storage_safe">已中止</string>
+    <string name="ui_btn_start">启动隐私监测</string>
+    <string name="ui_btn_start_first">请先启动隐私监测</string>
+    <string name="ui_btn_stop">停止监测</string>
+    <string name="ui_btn_timeline">查看事件时间线</string>
+    <string name="ui_btn_export">导出记录（本地）</string>
+    <string name="ui_btn_pressure">真机压测 sgPushSensor</string>
+    <!-- W8 Debug 演示:仅 debug 构建显示的注入按钮(Release 不可见) -->
+    <string name="ui_btn_demo_alert">注入演示告警 (DEBUG)</string>
+    <string name="ui_title_dashboard">SensorGuard 实时仪表盘</string>
+    <string name="ui_title_timeline">隐私事件时间线</string>
+    <string name="ui_filter_system">显示系统调用</string>
+    <string name="ui_filter_system_hint">关闭后仅显示第三方 App 的传感器调用</string>
+    <string name="ui_title_detail">风险详情 / 引导</string>
+    <string name="ui_intervention_none">此事件无干预引导</string>
+    <string name="ui_intervention_mic">打开系统隐私设置(麦克风引导)</string>
+    <string name="ui_intervention_camera">打开系统隐私设置(摄像头引导)</string>
+    <string name="ui_intervention_sensor">Android 13+ 传感器已关闭引导</string>
+    <string name="ui_event_counts" formatted="false">今日事件 %1$d 条 · 告警 %2$d 条</string>
+
+    <!-- W8 (文档 §5/§8): 导出记录(本地) -->
+    <string name="ui_export_title">导出记录</string>
+    <string name="ui_export_msg">将导出本机最近采集的传感器事件与告警为本地文件，不会上传任何数据。如需分享给他人复核，请勾选匿名化（用 pkg_hash 替代包名）。</string>
+    <string name="ui_export_anonymize">匿名化（用 pkg_hash 替代包名）</string>
+    <string name="ui_export_json">导出 JSON</string>
+    <string name="ui_export_csv">导出 CSV</string>
+    <string name="ui_export_empty">暂无可导出数据，请先启动监测并等待事件流入</string>
+    <string name="ui_export_done" formatted="false">已导出：%1$s</string>
+    <string name="ui_export_failed" formatted="false">导出失败：%1$s</string>
+</resources>

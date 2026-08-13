@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "corpus_id": "default-v1",
+  "generated_at": "2026-08-13",
+  "generated_by": "calibrate.py",
+  "description": "SensorGuard v1.0 \u9ed8\u8ba4\u9608\u503c,\u7531 calibrate.py \u4ece\u6807\u5b9a corpus \u4ea7\u51fa\u3002",
+  "thresholds": {
+    "ks_tau": 0.0897,
+    "kl_divergence": 0.1537,
+    "burst_entropy_min": 2.312,
+    "burst_entropy_max": 3.95,
+    "period_energy_concentration": 0.3528,
+    "min_events_for_l3": 20
+  }
+}

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <!-- foregroundServiceType="specialUse" 在 API 34+ 代码中按需声明,manifest 不声明权限以兼容 Android 10-13 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- W12/T2 (文档 §4 P4): 使用 Shizuku API 必须声明此权限,否则 Shizuku 永远返回 DENIED,
+         且 App 不会出现在 Shizuku 授权列表里,导致 T2 探针无法激活。 -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23"/>
+
+    <!-- W12/T2 (文档 §4 P4): Android 11+(API 30+) 包可见性(package visibility)限制。
+         不声明 <queries> 会导致本 App 在运行时看不到 moe.shizuku.privileged.api 的
+         ShizukuProvider,从而 Shizuku.pingBinder() 永远返回 false —— 表现正是
+         "Shizuku 已配对/服务端 shizuku_server 进程在跑,但本 App 报 binder not alive、
+         授权框永远弹不出、T2 探针永久休眠"。这是本问题的真正根因。声明后探针即可拿
+         到 binder。低版本系统会忽略此元素,无副作用。 -->
+    <queries>
+        <package android:name="moe.shizuku.privileged.api" />
+    </queries>
+
+    <application
+        android:name=".App"
+        android:label="@string/app_name"
+        android:allowBackup="false"
+        android:theme="@style/Theme.SensorGuard">
+
+        <!-- W12/T2 (文档 §4 P4): Shizuku 客户端必须声明此 Provider,Shizuku 才能把 binder 交付本 App。
+             缺失会导致 Shizuku 报 'provider is null <pkg>.shizuku'、binder 永远到不了 App、T2 探针无法激活。 -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"/>
+
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <!-- W8 (文档 §3): A2 事件时间线 / A3 风险详情-引导页,内部跳转不导出 -->
+        <activity android:name=".ui.TimelineActivity" android:exported="false"/>
+        <activity android:name=".ui.DetailActivity" android:exported="false"/>
+
+        <!-- W12/T2 (文档 §4 P4): Shizuku UserService 执行体。Shizuku 以 shell 身份拉起此独立进程,
+             通过构造函数取得 IUserService.Stub binder,供探针以 shell 权限执行 dumpsys 做精确归因。
+             processNameSuffix("shizuku") 必须与 android:process=":shizuku" 一致;
+             action 必须为 rickka.shizuku.service.action.TRANSFER(Shizuku 按此 action 定位组件)。 -->
+        <service
+            android:name=".shizuku.UserService"
+            android:process=":shizuku"
+            android:exported="false"
+            tools:ignore="Instantiatable">
+            <!-- Shizuku UserService 继承 IUserService.Stub(AIDL),非 android.app.Service;
+                 Lint Instantiatable 误报,Shizuku 通过构造函数实例化(moe.shizuku 规范)。 -->
+            <intent-filter>
+                <action android:name="rikka.shizuku.service.action.TRANSFER"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".service.GuardService"
+            android:exported="false"
+            tools:ignore="ForegroundServiceType">
+            <!-- foregroundServiceType:startForeground 按 API 版本在代码中传参
+                 (API 34+ 传 FOREGROUND_SERVICE_TYPE_SPECIAL_USE),manifest 不静态声明
+                 以兼容 Android 10-13;Lint ForegroundServiceType 为已知偏差。 -->
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="privacy_monitoring"/>
+        </service>
+    </application>
+</manifest>

@@ -1,0 +1,78 @@
+# SensorGuard v1.0 Semgrep 安全规则 (W11 文档 §7 供应链/合规)
+# 用法: semgrep --config .semgrep/rules.yml --error
+rules:
+  # ── 加密链路 ──────────────────────────────────────────────────────────
+  # 硬编码密钥:SecretKeySpec 的输入必须是 SecureRandom/KEK 解密结果,不能是字面量。
+  # 本仓库正确用法: DekManager.createDek 用 random.nextBytes(32);
+  #                 CryptoEngine.unwrapDek 用 KEK cipher.doFinal(body)。
+  - id: sg-no-hardcoded-secret-key
+    patterns:
+      - pattern: SecretKeySpec($KEY, $ALG)
+      - pattern-not: SecretKeySpec($RAND.nextBytes(...), $ALG)
+      - pattern-not: SecretKeySpec($CIPHER.doFinal(...), $ALG)
+      - pattern-not: SecretKeySpec($BYTES.copyOfRange(...), $ALG)
+    message: 禁止硬编码密钥;必须经 Android Keystore(SecureRandom)或 KEK 解密产生
+    languages: [java, kotlin]
+    severity: ERROR
+
+  - id: sg-no-insecure-cipher
+    pattern: Cipher.getInstance($TRANSFORM)
+    metavariable-regex:
+      $TRANSFORM: .*(ECB|NoPadding|DES|RC4).*
+    message: 禁止 ECB/DES/RC4 等不安全算法;必须 AES-256-GCM(文档 §8.2)
+    languages: [java, kotlin]
+    severity: ERROR
+
+  - id: sg-no-plaintext-iv
+    pattern: IvParameterSpec($IV)
+    metavariable-regex:
+      $IV: (?i)(?=.*[0-9a-f]{16}).*
+    message: IV 必须由 SecureRandom 生成并存密文旁,禁止硬编码常量
+    languages: [java, kotlin]
+    severity: ERROR
+
+  - id: sg-no-log-secrets
+    patterns:
+      - pattern: Log.$METHOD(..., $ARG, ...)
+      - metavariable-regex:
+          $METHOD: (d|i|w|e|v)
+      - metavariable-regex:
+          $ARG: (?i).*(password|secret|token|key|iv|wrapped).*
+    message: 禁止记录密钥/口令/IV 明文
+    languages: [java, kotlin]
+    severity: ERROR
+
+  # ── 网络/WebView ─────────────────────────────────────────────────────
+  - id: sg-no-trust-all
+    pattern: TrustManager
+    message: 禁止信任所有证书(应用零网络,不应出现自定义 TrustManager)
+    languages: [java, kotlin]
+    severity: ERROR
+
+  - id: sg-no-webview-js
+    pattern: setJavaScriptEnabled(true)
+    message: 应用无 WebView 需求,禁止启用 JS
+    languages: [java, kotlin]
+    severity: ERROR
+
+  # ── 权限边界 ─────────────────────────────────────────────────────────
+  - id: sg-no-all-packages
+    pattern: QUERY_ALL_PACKAGES
+    message: 文档 §7 明确不申请 QUERY_ALL_PACKAGES,改用 <queries> 白名单
+    languages: [xml]
+    severity: ERROR
+
+  - id: sg-no-internet-in-main
+    pattern: android.permission.INTERNET
+    message: 主进程零网络权限(v1.0 完全离线)
+    languages: [xml]
+    severity: ERROR
+
+  # ── Rust(与 clippy 互补: catch_unwind 边界安全) ─────────────────────
+  - id: sg-no-unchecked-ptr-null
+    patterns:
+      - pattern: slice::from_raw_parts($P, $N)
+      - pattern-not: bar="..."
+    message: 原始指针必须已做 null 检查(遵循 ffi/mod.rs 的 null-guard 模式)
+    languages: [rust]
+    severity: WARNING

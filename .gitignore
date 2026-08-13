@@ -1,0 +1,28 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Local config (SDK path etc.)
+local.properties
+
+# Rust
+core-rust/target/
+
+# JNI artifacts produced by cargo-ndk (CI rebuilds them)
+app/src/main/jniLibs/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Local debug APK copied to project root by tools/build_apk.bat
+app-debug.apk
+
+# Gradle home cache
+.gradle_home/

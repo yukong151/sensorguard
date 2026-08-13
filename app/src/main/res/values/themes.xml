@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppCompatActivity 要求 Theme.AppCompat 后代;修复真机启动崩溃 -->
+    <style name="Theme.SensorGuard" parent="Theme.AppCompat.Light.NoActionBar"/>
+</resources>

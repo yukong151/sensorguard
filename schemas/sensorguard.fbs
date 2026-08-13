@@ -1,0 +1,49 @@
+namespace sg;
+
+enum OpKind : ubyte { RECORD_AUDIO=0, CAMERA=1, FINE_LOCATION=2,
+                      ACCEL=10, GYRO=11, MAG=12, BARO=13, LIGHT=14, PROX=15 }
+enum Phase : ubyte { START=0, STOP=1, TICK=2 }
+enum VerdictKind : ubyte { LEGIT=0, OBSERVE=1, ALERT=2 }
+enum ViolationCat : ubyte { NONE=0, OUT_OF_SCOPE=1, STEALTH_HOURS=2,
+                            SIDE_CHANNEL=3, FINGERPRINT=4 }
+enum EvidenceTier : ubyte { T0_BASIC=0, T1_STANDARD=1, T2_ENHANCED=2 }
+
+struct PkgHash { b0:ubyte; b1:ubyte; b2:ubyte; b3:ubyte;
+                 b4:ubyte; b5:ubyte; b6:ubyte; b7:ubyte;
+                 b8:ubyte; b9:ubyte; b10:ubyte; b11:ubyte; }
+
+struct CtxTag {
+  fg_state: ubyte; user_present: bool; intent_hint: bool;
+  decl_purpose: ubyte; system_proxy: bool; audio_focus: bool;
+  power_state: bool; net_egress_anomaly: bool;
+}
+
+struct SensorSample { ts_ns: long; kind: OpKind; x: float; y: float; z: float; }
+
+table OpEvent {
+  ts_ns: long; uid: int; pkg_hash: PkgHash; op: OpKind; phase: Phase; ctx: CtxTag;
+  // W12/T2 (文档 §4 P4):精确采样周期(微秒),由 Shizuku 探针从 dumpsys sensorservice
+  // 解析得到。0 表示未知(非 Shizuku 来源的 MIC/CAMERA 等探针填 0)。
+  // 引擎 sample_rate_hz 优先采用此物理值,而非由事件间隔反推。
+  sampling_period_us: long;
+}
+
+struct FeatureContrib { feature_id: ubyte; value: float; contrib: float; }
+
+table Verdict {
+  kind: VerdictKind; category: ViolationCat; severity: ubyte; s_ctx: float;
+  rule_id: ushort; top3: [FeatureContrib];
+  window_start_ns: long; window_end_ns: long;
+  evidence_tier: EvidenceTier; pkg_hash: PkgHash; op: OpKind; degraded: bool;
+}
+
+table VerdictBatch {
+  verdicts: [Verdict]; tick_id: ulong;
+  wall_start_ns: long; wall_end_ns: long;
+  schema_version: ushort = 1;
+}
+
+struct ActivePair { uid: int; op: OpKind; pkg_hash: PkgHash; }
+table TickInput { tick_id: ulong; now_ns: long; active_pairs: [ActivePair]; tier: EvidenceTier = T0_BASIC; }
+
+root_type VerdictBatch;

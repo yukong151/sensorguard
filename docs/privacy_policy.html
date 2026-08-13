@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SensorGuard 隐私政策</title>
+<style>
+  body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 800px; margin: 0 auto; padding: 24px; line-height: 1.7; color: #222; }
+  h1 { font-size: 22px; border-bottom: 2px solid #2E7D32; padding-bottom: 8px; }
+  h2 { font-size: 17px; margin-top: 28px; color: #2E7D32; }
+  p, li { font-size: 14px; }
+  code { background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+  .updated { color: #666; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>SensorGuard 隐私政策</h1>
+<p class="updated">版本:v1.0 · 更新日期:2026-08-12</p>
+
+<p>SensorGuard(下称"本应用")是一款传感器与权限使用透明度工具。本政策说明本应用如何采集、处理与保护您的信息。本应用遵循《中华人民共和国个人信息保护法》(个保法)、GDPR 隐私设计原则(privacy by design)及 Google Play / 华为 AppGallery 审核要求。</p>
+
+<h2>1. 核心承诺</h2>
+<ul>
+  <li><strong>完全离线</strong>:本应用主进程不声明任何网络权限,所有数据处理在设备本地完成,不收集、不上传、不共享任何个人信息。</li>
+  <li><strong>拒绝权限最小化</strong>:仅申请运行监测所必需的系统权限(前台服务、通知、高频传感器采样),不申请 <code>QUERY_ALL_PACKAGES</code> 等窥探类权限。</li>
+  <li><strong>数据不出端</strong>:事件日志经 AES-256-GCM 加密后仅存于设备内部加密数据库,密钥由 Android Keystore 生成且不可导出。</li>
+</ul>
+
+<h2>2. 我们处理哪些信息</h2>
+<p>本应用仅处理设备本地的事件级信息,用于传感器与权限使用透明度分析:</p>
+<ul>
+  <li><strong>传感器使用事件</strong>:应用对麦克风、摄像头、加速度计、陀螺仪等的调用时间、时长、采样模式。</li>
+  <li><strong>应用标识</strong>:正在使用敏感传感器的应用的匿名哈希指纹(非包名明文,12 字节 HMAC 截断)。</li>
+  <li><strong>上下文信号</strong>:前台/后台状态、屏幕状态、用户是否在场等设备本地信号。</li>
+</ul>
+<p><strong>我们不处理</strong>:任何传感器原始波形数据、麦克风/摄像头内容、位置坐标、联系人、照片、浏览记录、个人身份信息。</p>
+
+<h2>3. 数据存储与加密</h2>
+<ul>
+  <li>事件日志存储于设备内部加密数据库(Room),以 AES-256-GCM 加密,DEK/KEK 双层密钥体系由 Android Keystore 保护。</li>
+  <li>日志仅保留 30 天,过期自动清理。</li>
+  <li>您可在应用内一键"擦除全部日志",执行后加密密钥被销毁,历史记录不可再读。</li>
+</ul>
+
+<h2>4. 权限说明</h2>
+<table>
+  <tr><th>权限</th><th>用途</th></tr>
+  <tr><td>前台服务(FOREGROUND_SERVICE)</td><td>常驻监测,保证隐私监控持续运行</td></tr>
+  <tr><td>通知(POST_NOTIFICATIONS)</td><td>展示监测运行状态与可选告警摘要</td></tr>
+  <tr><td>高频传感器采样(HIGH_SAMPLING_RATE_SENSORS)</td><td>传感器基线校准(仅运行时按需)</td></tr>
+  <tr><td>开机自启(RECEIVE_BOOT_COMPLETED)</td><td>设备重启后恢复监测服务</td></tr>
+</table>
+
+<h2>4.1 可选增强:Shizuku 精确归因(内测版)</h2>
+<p>内测版可选的 <strong>Shizuku 精确归因</strong> 功能,需您在设备另行安装开源的 Shizuku 应用并主动授权后才会激活:</p>
+<ul>
+  <li><strong>用途</strong>:以您授予的 ADB shell 权限读取 <code>dumpsys sensorservice</code>,将 IMU 类传感器采样精确归因到具体应用,弥补常规探针"只能判断存在采样、无法判断是谁"的盲区。</li>
+  <li><strong>可选性</strong>:未安装/未授权 Shizuku 时,本应用功能完全不受影响(证据等级降级为 T0/T1),不主动安装、不诱导授权。</li>
+  <li><strong>数据边界</strong>:精确归因结果(包名、采样率)仅存储于设备本地加密数据库,不上传、不共享。</li>
+  <li><strong>商店版</strong>(store 构建)不启用此功能,且不向终端用户展示任何包名/应用身份。</li>
+</ul>
+
+<h2>5. 数据共享与第三方</h2>
+<p>本应用<strong>不与任何第三方共享、出售或传输数据</strong>。应用不集成任何广告 SDK、统计 SDK 或社交 SDK,供应链三方库(AndroidX/Room/安全加密库)均锁定版本并定期审计。</p>
+
+<h2>6. 您的权利</h2>
+<ul>
+  <li><strong>知情权</strong>:本政策全文可查,应用内可查看全部事件记录。</li>
+  <li><strong>删除权</strong>:一键擦除全部日志,毫秒级完成且不可恢复。</li>
+  <li><strong>停用权</strong>:可随时停止监测服务或卸载应用。</li>
+</ul>
+
+<h2>7. 未成年人保护</h2>
+<p>本应用不面向 13 周岁以下未成年人,不主动收集任何未成年人信息。</p>
+
+<h2>8. 政策变更</h2>
+<p>本政策如有变更,将在应用内更新并注明日期。重大变更会通过应用内提示告知。</p>
+
+<h2>9. 联系我们</h2>
+<p>如对本政策有任何疑问,请通过应用商店评论区或开发者邮箱联系我们(详见应用商店页面)。</p>
+
+<p style="margin-top:32px; color:#666; font-size:12px;">本政策符合:个保法第 51 条(去标识化+加密)、GDPR Art. 25(privacy by design)、Art. 32(state of the art)。</p>
+</body>
+</html>
