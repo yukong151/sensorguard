@@ -252,7 +252,7 @@ class GuardService : Service() {
         // W12/T2: 维护 包指纹 -> (内层包名, uid) 反向映射,供 UI 归因展示。
         // P2-6: 新映射同步写入 Room(跨重启持久化);已存在则 IGNORE 跳过。
         val hex = pkgHex(ev.pkgHash)
-        if (hex !in pkgHashInfo) {
+        if (!pkgHashInfo.containsKey(hex)) {
             pkgHashInfo[hex] = Pair(ev.pkgName ?: "", ev.uid)
             try {
                 attributionDao?.insertIfAbsent(

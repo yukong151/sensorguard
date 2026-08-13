@@ -27,8 +27,8 @@ android {
     signingConfigs {
         create("release") {
             val keystoreFile = System.getenv("SG_KEYSTORE_FILE")
-            if (keystoreFile != null && java.io.File(keystoreFile).exists()) {
-                storeFile = java.io.File(keystoreFile)
+            if (keystoreFile != null && file(keystoreFile).exists()) {
+                storeFile = file(keystoreFile)
                 storePassword = System.getenv("SG_KEYSTORE_PASSWORD") ?: ""
                 keyAlias = System.getenv("SG_KEY_ALIAS") ?: ""
                 keyPassword = System.getenv("SG_KEY_PASSWORD") ?: ""
@@ -43,7 +43,7 @@ android {
             // P1-5: 环境变量提供 keystore 时用 release 签名;否则回退 debug(开发构建)。
             // 原 W1 偏差(始终用 debug)已修复:CI 设置 SG_KEYSTORE_* 即启用正式签名。
             val keystoreFile = System.getenv("SG_KEYSTORE_FILE")
-            signingConfig = if (keystoreFile != null && java.io.File(keystoreFile).exists()) {
+            signingConfig = if (keystoreFile != null && file(keystoreFile).exists()) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
