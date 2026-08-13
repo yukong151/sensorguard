@@ -1,6 +1,6 @@
 package com.yuexiao12.sensorguard.probe
 
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 
 /** 统一 wall-clock 时间基(ns),与 GuardService.batchTick 的 nowNs 一致(Rust 侧 24h 窗口切片)。*/
 fun wallClockNs(): Long = System.currentTimeMillis() * 1_000_000L

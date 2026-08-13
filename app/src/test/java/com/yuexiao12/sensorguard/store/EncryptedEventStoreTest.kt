@@ -6,7 +6,7 @@ import com.yuexiao12.sensorguard.crypto.DekManager
 import com.yuexiao12.sensorguard.crypto.MemoryCounterStore
 import com.yuexiao12.sensorguard.crypto.MemoryKeychainStore
 import com.yuexiao12.sensorguard.crypto.SafeModeException
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 import com.yuexiao12.sensorguard.probe.ProbeEvent
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals

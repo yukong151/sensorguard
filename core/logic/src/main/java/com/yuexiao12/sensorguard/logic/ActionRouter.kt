@@ -1,6 +1,6 @@
 package com.yuexiao12.sensorguard.logic
 
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 
 /**
  * 干预路由(文档 §6 干预路由表)的纯 JVM 部分: op → 干预方案。

@@ -16,6 +16,12 @@ jobs:
       # W11: 基准回归门禁(性能预算,文档 §9)
       - run: cargo bench
         working-directory: core-rust
+      # P4-3 (文档 §13):AFL fuzz 6 个 JNI 入口 —— 编译门禁(Linux 可链接 ASAN)
+      - uses: dtolnay/rust-toolchain@nightly
+        with: { components: "llvm-tools-preview" }
+      - run: cargo install cargo-fuzz --locked
+      - run: for t in fuzz_init fuzz_push_op fuzz_push_sensor fuzz_sensor_health fuzz_snapshot fuzz_tick; do cargo +nightly fuzz build "$t" || exit 1; done
+        working-directory: core-rust/fuzz
 
   semgrep:
     runs-on: ubuntu-latest

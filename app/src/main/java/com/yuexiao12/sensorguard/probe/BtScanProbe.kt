@@ -2,7 +2,7 @@ package com.yuexiao12.sensorguard.probe
 
 import android.content.Context
 import android.util.Log
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 
 /**
  * 蓝牙扫描威胁面探针(P3, 文档 §2 威胁面:蓝牙/Wi-Fi 扫描定位)。

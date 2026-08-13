@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
+    // P4-5 (文档 §15): Kotlin KDoc
+    id("org.jetbrains.dokka")
 }
 android {
     namespace = "com.yuexiao12.sensorguard"
@@ -58,6 +60,9 @@ android {
     sourceSets["main"].jniLibs.srcDirs("src/main/jniLibs")
 }
 dependencies {
+    // P4-1 (文档 §8 多模块结构):纯 JVM 模块依赖
+    implementation(project(":core:enums"))
+    implementation(project(":core:logic"))
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.lifecycle:lifecycle-service:2.8.4")

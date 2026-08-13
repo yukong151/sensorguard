@@ -3,7 +3,7 @@ package com.yuexiao12.sensorguard.probe
 import android.app.AppOpsManager
 import android.content.Context
 import android.util.Log
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 
 /**
  * 位置探针(P3, 文档 §5.1 AppOps Probe)。

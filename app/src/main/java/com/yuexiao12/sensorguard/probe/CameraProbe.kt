@@ -5,7 +5,7 @@ import android.hardware.camera2.CameraManager
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 
 /**
  * 摄像头探针(T0)。

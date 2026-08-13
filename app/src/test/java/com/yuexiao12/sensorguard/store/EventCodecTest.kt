@@ -1,6 +1,6 @@
 package com.yuexiao12.sensorguard.store
 
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 import com.yuexiao12.sensorguard.probe.ProbeEvent
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals

@@ -1,6 +1,6 @@
 package com.yuexiao12.sensorguard.util
 
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 import com.yuexiao12.sensorguard.jni.VerdictEntryData
 import com.yuexiao12.sensorguard.probe.ProbeEvent
 import org.json.JSONArray

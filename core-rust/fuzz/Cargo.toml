@@ -1,0 +1,48 @@
+[package]
+name = "sensorguard-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+sensorguard = { path = ".." }
+
+[[bin]]
+name = "fuzz_init"
+path = "fuzz_targets/fuzz_init.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_push_sensor"
+path = "fuzz_targets/fuzz_push_sensor.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_push_op"
+path = "fuzz_targets/fuzz_push_op.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_tick"
+path = "fuzz_targets/fuzz_tick.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_snapshot"
+path = "fuzz_targets/fuzz_snapshot.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_sensor_health"
+path = "fuzz_targets/fuzz_sensor_health.rs"
+test = false
+doc = false

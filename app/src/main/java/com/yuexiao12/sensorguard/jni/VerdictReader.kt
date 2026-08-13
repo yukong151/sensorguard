@@ -1,5 +1,7 @@
 package com.yuexiao12.sensorguard.jni
 
+import com.yuexiao12.sensorguard.enums.SgEnum
+
 /** Verdict (table) 解码结果,字段名与 schemas/sensorguard.fbs 中 Verdict 表一致。*/
 data class VerdictEntryData(
     val kind: Int,                    // VerdictKind

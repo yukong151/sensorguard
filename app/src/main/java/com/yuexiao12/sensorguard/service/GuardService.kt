@@ -20,7 +20,7 @@ import com.yuexiao12.sensorguard.db.RoomKeychainStore
 import com.yuexiao12.sensorguard.db.SgDb
 import com.yuexiao12.sensorguard.jni.ActivePairData
 import com.yuexiao12.sensorguard.jni.FbSerde
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 import com.yuexiao12.sensorguard.jni.SgErrors
 import com.yuexiao12.sensorguard.jni.SgNative
 import com.yuexiao12.sensorguard.jni.SensorHealthReader
@@ -33,6 +33,7 @@ import com.yuexiao12.sensorguard.logic.HealthLevel
 import com.yuexiao12.sensorguard.logic.SystemHealth
 import com.yuexiao12.sensorguard.probe.CameraProbe
 import com.yuexiao12.sensorguard.probe.LocationProbe
+import com.yuexiao12.sensorguard.probe.NetProbe
 import com.yuexiao12.sensorguard.probe.BtScanProbe
 import com.yuexiao12.sensorguard.probe.CtxProbe
 import com.yuexiao12.sensorguard.probe.MicProbe
@@ -84,6 +85,8 @@ class GuardService : Service() {
     private var locationProbe: LocationProbe? = null
     // P3 (文档 §2):蓝牙扫描威胁面探针 —— 经 Shizuku dumpsys 统计 discovery 频次
     private var btScanProbe: BtScanProbe? = null
+    // P4-8 (文档 §2/§4 C4):网络流量统计探针(v1.0 仅统计,不出端)
+    private var netProbe: NetProbe? = null
 
     // W12 (文档 §4 P4):Shizuku 精确归因探针(T2 增强,可选独立插件)
     private var shizukuProbe: ShizukuProbe? = null
@@ -153,6 +156,8 @@ class GuardService : Service() {
         // P3 (文档 §2):蓝牙扫描探针,高频时推 OBSERVE 告警
         btScanProbe = BtScanProbe(this) { count -> pushBtScanAlert(count) }
             .also { it.start(probeSink) }
+        // P4-8: 网络流量统计(仅日志审计,不告警)
+        netProbe = NetProbe(this).also { it.start(probeSink) }
         // W12 (文档 §4 P4):Shizuku 精确归因 —— 启用以 ADB 权限读取 dumpsys sensorservice,
         // 获取精确 uid+采样率,覆盖 AppOps 探针无法归因的 IMU 类传感器盲区。
         // start() 内部注册权限/binder 监听器并请求授权: 晚授权(用户在 Shizuku 内手动授予)
@@ -271,6 +276,8 @@ class GuardService : Service() {
         maybeDailySummary()
         // P3 (文档 §2):蓝牙扫描频次检测 —— 经 Shizuku dumpsys bluetooth_manager
         checkBtScan()
+        // P4-8: 网络流量增量统计(v1.0 仅审计日志)
+        netProbe?.tick()
         val level = health.level()
         if (level == HealthLevel.SAFE_MODE || level == HealthLevel.DEAD) {
             maybeSelfHeal()
@@ -620,6 +627,7 @@ class GuardService : Service() {
         cameraProbe?.stop()
         locationProbe?.stop()
         btScanProbe?.stop()
+        netProbe?.stop()
         shizukuProbe?.stop()
         sensorBaselineProbe?.stop()
         micProbe = null

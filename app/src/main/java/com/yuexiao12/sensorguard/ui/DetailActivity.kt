@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.yuexiao12.sensorguard.R
 import com.yuexiao12.sensorguard.databinding.ActivityDetailBinding
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 import com.yuexiao12.sensorguard.jni.VerdictEntryData
 import com.yuexiao12.sensorguard.logic.ActionRouter
 import com.yuexiao12.sensorguard.service.GuardService

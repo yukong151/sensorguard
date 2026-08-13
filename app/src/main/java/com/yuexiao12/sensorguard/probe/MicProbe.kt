@@ -6,7 +6,7 @@ import android.media.AudioRecordingConfiguration
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 
 /**
  * 麦克风探针(T0)。

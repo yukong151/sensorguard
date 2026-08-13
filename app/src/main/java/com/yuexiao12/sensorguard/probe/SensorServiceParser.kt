@@ -1,6 +1,6 @@
 package com.yuexiao12.sensorguard.probe
 
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 
 /**
  * Shizuku 精确归因 (文档 §4 P4:T2 增强,独立插件)。

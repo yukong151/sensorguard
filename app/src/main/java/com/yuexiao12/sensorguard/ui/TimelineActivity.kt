@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.yuexiao12.sensorguard.BuildConfig
 import com.yuexiao12.sensorguard.R
 import com.yuexiao12.sensorguard.databinding.ActivityTimelineBinding
-import com.yuexiao12.sensorguard.jni.SgEnum
+import com.yuexiao12.sensorguard.enums.SgEnum
 import com.yuexiao12.sensorguard.jni.VerdictEntryData
 import com.yuexiao12.sensorguard.probe.CtxProbe
 import com.yuexiao12.sensorguard.probe.ProbeEvent
