@@ -1,4 +1,4 @@
-//! W6 D3 (tabbit_文档(2).md §6):规则 JSON → Rust 结构的手写极简加载器。
+//! W6 D3 (sensorguard_文档(2).md §6):规则 JSON → Rust 结构的手写极简加载器。
 //!
 //! 不引入 serde_json(release 增量约 180~250 KB,违反 §6 体积预算 ≤ 15 KB);
 //! 规则文件字段集合封闭(§2 20 条清单),仅按 key 名做子串定位 + 类型转换,

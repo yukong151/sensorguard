@@ -4,7 +4,7 @@
 //! (文档明确:避免 jni crate 引入 ~100 KB 体积)。
 //!
 //! 符号命名遵循 JNI 规范 `Java_<包名>_<类名>_<方法名>`:
-//!   Kotlin `object SgNative`(包 com.tabbit.sensorguard.jni)→ 实例方法(非 static),
+//!   Kotlin `object SgNative`(包 com.sensorguard.app.jni)→ 实例方法(非 static),
 //!   第二参数为 `jobject`(单例 INSTANCE)。
 //!
 //! 类型模型(NDK jni.h C 模式):
@@ -69,7 +69,7 @@ unsafe fn table(env: *mut JNIEnv) -> &'static JNINativeInterface {
 // ---- JNI 桥接入口(符号名 = JNI 规范命名) ----
 
 #[no_mangle]
-pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgInit(
+pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgInit(
     env: *mut JNIEnv,
     _this: JObject,
     cfg: JByteArray,
@@ -92,7 +92,7 @@ pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgInit(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgPushSensor(
+pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgPushSensor(
     _env: *mut JNIEnv,
     _this: JObject,
     ts_ns: JLong,
@@ -106,7 +106,7 @@ pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgPushSensor(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgPushOp(
+pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgPushOp(
     env: *mut JNIEnv,
     _this: JObject,
     buf: JByteArray,
@@ -129,7 +129,7 @@ pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgPushOp(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgTick(
+pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgTick(
     env: *mut JNIEnv,
     _this: JObject,
     input: JByteArray,
@@ -171,7 +171,7 @@ pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgTick(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgSnapshot(
+pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgSnapshot(
     env: *mut JNIEnv,
     _this: JObject,
     out: JByteArray,
@@ -196,7 +196,7 @@ pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgSnapshot(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgShutdown(
+pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgShutdown(
     _env: *mut JNIEnv,
     _this: JObject,
 ) -> JInt {
@@ -204,7 +204,7 @@ pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgShutdown(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_tabbit_sensorguard_jni_SgNative_sgSensorHealth(
+pub extern "C" fn Java_com_sensorguard_sensorguard_jni_SgNative_sgSensorHealth(
     env: *mut JNIEnv,
     _this: JObject,
     out: JByteArray,

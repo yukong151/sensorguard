@@ -1,6 +1,6 @@
 # T2 传感器客户端归因报告
 
-- **项目**：边缘计算及传感器安全的轻量级 APP（com.tabbit.sensorguard）
+- **项目**：边缘计算及传感器安全的轻量级 APP（com.sensorguard.app）
 - **探针链路**：T2（Shizuku `UserService` 机制，`dumpsys sensorservice` 精确归因）
 - **生成时间**：2026-08-13 03:27（基于当日真机回归实测）
 - **测试设备**：ZY22DDK2FL（USB 通道，Shizuku 13.1.5）
@@ -17,7 +17,7 @@
 | UserService 绑定 | 仅绑定一次，**无重绑 / 无 `binder dead` / 无 `T2 probe paused`** |
 | 精确归因 | 每轮稳定输出 `Shizuku: 18 sensor clients, uid=10337 pkg=com.facebook.ads.redexgen.X.T5` |
 | 抗系统回收 | 03:16:32 系统因空置杀掉无关 App（deskclock/smartservice），本 App 与 `:shizuku` 进程**毫发无损**，下一轮照常 |
-| 进程存活 | 结束时 `shizuku_server`(17620)、`com.tabbit.sensorguard:shizuku`(26464)、主进程均存活 |
+| 进程存活 | 结束时 `shizuku_server`(17620)、`com.sensorguard.app:shizuku`(26464)、主进程均存活 |
 
 **结论：T2 链路稳健，可进入四路径回归（晚授权 / 服务死亡 / 超时 / T2 展示）。**
 
@@ -38,9 +38,9 @@
 | 10333 | 知乎 `com.zhihu.android` | `ShakeHelper` / `launch.view.shake.a` | 「摇一摇」互动 |
 | 10337 | **视频下载器 `com.smart.tool.videodownloader`** | **Pangle `com.pgl.ssdk.k0` + Facebook `com.facebook.ads.redexgen.X.T5` + AppLovin `com.applovin.impl.*`** | **三家广告 SDK 同时偷听运动传感器** |
 | 10346 | QQ `com.tencent.mobileqq` | `msf.core.stepcount.g.b` | 计步（pedometer） |
-| 10550 | **本安全 App `com.tabbit.sensorguard`** | （探测方，非被探测客户端） | 仅做 `dumpsys` 读取，自身不注册监听 |
+| 10550 | **本安全 App `com.sensorguard.app`** | （探测方，非被探测客户端） | 仅做 `dumpsys` 读取，自身不注册监听 |
 
-> 本安全 App 包名 `com.tabbit.sensorguard`（uid 10550）是**检测者**，不是被检测的传感器客户端。
+> 本安全 App 包名 `com.sensorguard.app`（uid 10550）是**检测者**，不是被检测的传感器客户端。
 
 ---
 

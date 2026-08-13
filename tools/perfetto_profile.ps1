@@ -1,4 +1,4 @@
-# W10 (文档 §13):真机性能压测脚本 —— Perfetto 采集 + 预算核验。
+﻿# W10 (文档 §13):真机性能压测脚本 —— Perfetto 采集 + 预算核验。
 #
 # 用法(真机连接后,PowerShell):
 #   .\tools\perfetto_profile.ps1            # 默认采集 60s,输出到 build/perfetto/
@@ -22,7 +22,7 @@ param(
 $ErrorActionPreference = "Stop"
 $adb = "C:\Users\ew\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 if (-not (Test-Path $adb)) { $adb = (Get-Command adb).Source }
-$pkg = "com.tabbit.sensorguard"
+$pkg = "com.sensorguard.app"
 
 # 前置:设备在线
 $dev = (& $adb devices) | Select-String "device$"

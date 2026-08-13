@@ -29,3 +29,7 @@ app-debug.apk
 
 # OhMyOpenCode 会话运行时文件
 .omo/run-continuation/
+
+# AI workbuddy/о会话临时文件
+.workbuddy/
+.omo/

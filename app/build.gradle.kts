@@ -4,10 +4,10 @@ plugins {
     id("com.google.devtools.ksp")
 }
 android {
-    namespace = "com.tabbit.sensorguard"
+    namespace = "com.sensorguard.app"
     compileSdk = 34
     defaultConfig {
-        applicationId = "com.tabbit.sensorguard"
+        applicationId = "com.sensorguard.app"
         minSdk = 29; targetSdk = 34
         versionCode = 1; versionName = "1.0.0"
         ndk { abiFilters += listOf("arm64-v8a") }

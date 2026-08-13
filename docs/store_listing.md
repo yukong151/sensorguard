@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **应用名称**: SensorGuard — 传感器隐私守护
-- **包名**: com.tabbit.sensorguard
+- **包名**: com.sensorguard.app
 - **分类**: 工具 → 安全/隐私
 - **标签**: 隐私监测、传感器、反窃听、权限管理、安全
 - **最低版本**: Android 10 (API 29)
