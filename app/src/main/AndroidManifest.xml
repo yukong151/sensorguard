@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <!-- FGS specialUse(0x40000000)在 API 34(targetSdk 34)必须声明专属权限,否则
+         Starting FGS with type specialUse requires permissions FOREGROUND_SERVICE_SPECIAL_USE -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <!-- foregroundServiceType="specialUse" 在 API 34+ 代码中按需声明,manifest 不声明权限以兼容 Android 10-13 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
@@ -66,10 +69,12 @@
         <service
             android:name=".service.GuardService"
             android:exported="false"
+            android:foregroundServiceType="specialUse"
             tools:ignore="ForegroundServiceType">
             <!-- foregroundServiceType:startForeground 按 API 版本在代码中传参
-                 (API 34+ 传 FOREGROUND_SERVICE_TYPE_SPECIAL_USE),manifest 不静态声明
-                 以兼容 Android 10-13;Lint ForegroundServiceType 为已知偏差。 -->
+                 (API 34+ 传 FOREGROUND_SERVICE_TYPE_SPECIAL_USE);manifest 静态声明
+                 specialUse,满足 Android 14 的 subset 校验(0x40000000 ⊆ manifest),
+                 低版本(API <34)忽略此属性无副作用。 -->
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="privacy_monitoring"/>
