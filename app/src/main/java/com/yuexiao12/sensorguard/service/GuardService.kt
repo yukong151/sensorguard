@@ -43,6 +43,7 @@ import com.yuexiao12.sensorguard.probe.ProbeSink
 import com.yuexiao12.sensorguard.probe.ShizukuProbe
 import com.yuexiao12.sensorguard.probe.SensorBaselineProbe
 import com.yuexiao12.sensorguard.probe.SensorServiceParser
+import com.yuexiao12.sensorguard.probe.SensorOpProbe
 import com.yuexiao12.sensorguard.store.EncryptedEventStore
 import java.util.ArrayDeque
 import java.util.concurrent.ConcurrentHashMap
@@ -86,6 +87,9 @@ class GuardService : Service() {
 
     private var micProbe: MicProbe? = null
     private var cameraProbe: CameraProbe? = null
+    // 内测版精确归因: AppOps startWatchingActive 监听 record_audio/camera op,
+    // 回调携带精确 uid+包名,将 Mic/Camera 的 T0"未知来源"升级为 T1 精确归因。
+    private var sensorOpProbe: SensorOpProbe? = null
     // P3 (文档 §5.1):位置探针 —— AppOps startWatchingActive 监听 FINE/COARSE_LOCATION
     private var locationProbe: LocationProbe? = null
     // P3 (文档 §2):蓝牙扫描威胁面探针 —— 经 Shizuku dumpsys 统计 discovery 频次
@@ -184,6 +188,9 @@ class GuardService : Service() {
         CtxProbe.attach(this)
         micProbe = MicProbe(this).also { it.start(probeSink) }
         cameraProbe = CameraProbe(this).also { it.start(probeSink) }
+        // 内测版精确归因: 麦克风/相机 op 的精确 uid+包名(回调自带 packageName),
+        // 将 Mic/Camera 探针的 T0"未知来源"升级为 T1 精确归因。
+        sensorOpProbe = SensorOpProbe(this).also { it.start(probeSink) }
         // P3 (文档 §5.1):位置探针(OPSTR_FINE/COARSE_LOCATION, T1 uid归因)
         locationProbe = LocationProbe(this).also { it.start(probeSink) }
         // P3 (文档 §2):蓝牙扫描探针,高频时推 OBSERVE 告警
@@ -819,6 +826,7 @@ if (ShizukuProbe.isShizukuInstalled(this)) {
     override fun onDestroy() {
         micProbe?.stop()
         cameraProbe?.stop()
+        sensorOpProbe?.stop()
         locationProbe?.stop()
         btScanProbe?.stop()
         netProbe?.stop()
@@ -826,6 +834,7 @@ if (ShizukuProbe.isShizukuInstalled(this)) {
         sensorBaselineProbe?.stop()
         micProbe = null
         cameraProbe = null
+        sensorOpProbe = null
         shizukuProbe = null
         SgErrors.health = null
         instance = null
