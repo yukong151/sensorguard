@@ -843,7 +843,7 @@ vb.add_evidence_tier(sg::EvidenceTier::T0_BASIC);
     /// W10 (文档 §9):反压降级 —— ring 满时 sg_push_sensor 返回 E_RESOURCE 而非覆盖/阻塞。
     /// 预填 CAP(4096)后下一次 push 应拒绝;消费一个后恢复可入。
     #[test]
-    fn push_sensor_backpressure_returns_resource() {
+    fn push_sensor_backpressure_overwrites_oldest() {
         let _guard = isolate();
         assert_eq!(sg_init(std::ptr::null(), 0), E_OK);
         // 清空 ring 至空态,从空开始填
@@ -856,12 +856,18 @@ vb.add_evidence_tier(sg::EvidenceTier::T0_BASIC);
                 "slot {i} should accept"
             );
         }
-        // 满态:反压拒绝,不覆盖
-        assert_eq!(sg_push_sensor(9_999, 10, 0.0, 0.0, 0.0), E_RESOURCE);
-        assert_eq!(RING.len(), cap, "满态不驱逐");
-        // 消费一个后恢复可入
-        assert!(RING.pop().is_some());
-        assert_eq!(sg_push_sensor(10_000, 10, 0.0, 0.0, 0.0), E_OK);
+        // 满态:覆盖最旧(最新优先),容量保持
+        assert_eq!(sg_push_sensor(9_999, 10, 0.0, 0.0, 0.0), E_OK);
+        assert_eq!(RING.len(), cap, "容量保持");
+        // 被覆盖的是最旧样本(1000),现头部为 1001
+        let first = RING.pop().expect("sample");
+        assert_eq!(first.ts_ns, 1_001, "最旧样本被覆盖,头部前移");
+        // 尾部为最后写入的 9_999
+        let mut last = -1i64;
+        while let Some(x) = RING.pop() {
+            last = x.ts_ns;
+        }
+        assert_eq!(last, 9_999, "最新样本保留");
         sg_shutdown();
     }
 

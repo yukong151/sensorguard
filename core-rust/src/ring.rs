@@ -49,13 +49,21 @@ impl Ring {
     pub fn push(&self, s: Sample) -> Result<(), ()> {
         let t = self.tail.load(Ordering::Relaxed);
         let h = self.head.load(Ordering::Acquire);
-        if t.wrapping_sub(h) >= CAP {
-            return Err(());
-        }
+        // 满则覆盖最旧槽位(最新优先):检测关注当前采样模式,丢弃最旧数据而非拒绝最新样本。
+        // tail-head 达到容量时,head 与 tail 同步前移一个槽位(SPSC 下仅本生产者移动 tail,
+        // 消费者读到的新 head 保证被覆盖槽位已消费完毕)。
+        let overrun = t.wrapping_sub(h) >= CAP;
+        let w = if overrun {
+            // 覆盖时消费侧 head 需前移:由生产者代位推进 head(文档 §5.3 允许丢旧保新)。
+            self.head.store(h.wrapping_add(1), Ordering::Release);
+            t
+        } else {
+            t
+        };
         // 安全:槽位仅当前生产者写入;同一槽位复用必须等消费者 head 推进
         // (push 上方 Acquire 读到的最新 head 即保证此前消费已完成)。
         unsafe {
-            (*self.buf[t & MASK].get()).write(s);
+            (*self.buf[w & MASK].get()).write(s);
         }
         // Release:写入先于 tail 发布,消费者 Acquire 读 tail 后可见完整 Sample。
         self.tail.store(t.wrapping_add(1), Ordering::Release);
@@ -134,17 +142,44 @@ mod tests {
     }
 
     #[test]
-    fn full_returns_err_without_evict() {
+    fn full_overwrites_oldest_keeps_newest() {
         let r = Ring::new();
         for i in 0..CAP as i64 {
             assert!(r.push(s(i, 0.0)).is_ok(), "slot {i} should accept");
         }
         assert_eq!(r.len(), CAP);
-        assert!(r.push(s(-1, 0.0)).is_err(), "full ring rejects");
-        assert_eq!(r.len(), CAP, "no eviction on push");
-        // 消费一个后可再入
-        let _ = r.pop();
-        assert!(r.push(s(-2, 0.0)).is_ok());
+        // 满后再 push:覆盖最旧,不报错,保持容量
+        assert!(r.push(s(-1, 0.0)).is_ok(), "full ring overwrites oldest");
+        assert_eq!(r.len(), CAP, "capacity preserved after overwrite");
+        // 消费者看到的是最新样本(最旧的 s(0) 已被覆盖)
+        let first = r.pop().expect("newest sample");
+        assert_eq!(first.ts_ns, 1, "oldest (0) overwritten, 1 is now head");
+        // 尾部是最后写入的 -1
+        let mut last = -1i64;
+        while let Some(x) = r.pop() {
+            last = x.ts_ns;
+        }
+        assert_eq!(last, -1, "newest sample survives");
+    }
+
+    #[test]
+    fn continuous_overflow_keeps_latest_window() {
+        let r = Ring::new();
+        // 模拟传感器 50Hz 持续灌入远超容量
+        for i in 0..(CAP as i64 * 3) {
+            assert!(r.push(s(i, 0.0)).is_ok(), "no error even when overflowing");
+        }
+        // 始终保留最新 CAP 条
+        assert_eq!(r.len(), CAP);
+        let n = r.len();
+        let mut first_ts = -1i64;
+        for j in 0..n {
+            if let Some(x) = r.pop() {
+                if j == 0 { first_ts = x.ts_ns; }
+            }
+        }
+        // 头部是最后一个未被覆盖的样本 = 3*CAP - CAP
+        assert_eq!(first_ts, CAP as i64 * 2, "keeps latest CAP samples");
     }
 
     #[test]
@@ -168,7 +203,8 @@ mod tests {
     #[test]
     fn spsc_concurrent_preserves_fifo() {
         let r = Arc::new(Ring::new());
-        const N: usize = 100_000;
+        // N < CAP:保证不触发覆盖语义,验证无锁 SPSC 在无溢出时严格 FIFO
+        const N: usize = 2048;
         let prod = r.clone();
         let t = thread::spawn(move || {
             for i in 0..N {
@@ -193,5 +229,24 @@ mod tests {
         }
         t.join().expect("producer panicked");
         assert_eq!(expected, N);
+    }
+
+    #[test]
+    fn spsc_overflow_keeps_fifo_order_among_survivors() {
+        // 溢出(覆盖最旧)后,存活样本仍保持相对顺序(递增 ts),只是头部前移
+        let r = Ring::new();
+        for i in 0..(CAP as i64 + 5) {
+            assert!(r.push(s(i, 0.0)).is_ok());
+        }
+        assert_eq!(r.len(), CAP);
+        let mut prev = -1i64;
+        let mut count = 0;
+        while let Some(x) = r.pop() {
+            assert!(x.ts_ns > prev, "survivors remain FIFO");
+            prev = x.ts_ns;
+            count += 1;
+        }
+        assert_eq!(count, CAP);
+        assert_eq!(prev, CAP as i64 + 4, "newest sample is last");
     }
 }

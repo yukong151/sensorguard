@@ -66,7 +66,11 @@ class SensorBaselineProbe(private val context: Context) : Probe {
                         e.values.getOrElse(2) { 0f },
                     )
                 }.getOrDefault(SgErrors_E_PANIC)
-                if (rc < 0) Log.w(TAG, "sgPushSensor kind=$kind rc=$rc")
+                // 满环覆盖(rc=E_RESOURCE 旧版)或覆盖语义下满环不再报错;仅真正异常才记日志,
+                // 避免 50Hz 热路径在满环时刷屏(传感器背压属正常状态,非错误)。
+                if (rc < 0 && rc != SgErrors_E_RESOURCE) {
+                    Log.w(TAG, "sgPushSensor kind=$kind rc=$rc")
+                }
             }
 
             override fun onAccuracyChanged(s: Sensor?, acc: Int) = Unit
@@ -87,7 +91,8 @@ class SensorBaselineProbe(private val context: Context) : Probe {
 
     companion object {
         private const val TAG = "SG-Baseline"
-        // SgErrors.E_PANIC 的本地镜像,避免 Probe 层反向依赖 SgErrors 的 check 路径。
+        // SgErrors.E_PANIC / E_RESOURCE 的本地镜像,避免 Probe 层反向依赖 SgErrors 的 check 路径。
         private const val SgErrors_E_PANIC = -6
+        private const val SgErrors_E_RESOURCE = -5
     }
 }
