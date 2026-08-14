@@ -82,8 +82,13 @@ class TimelineActivity : AppCompatActivity() {
         }
 
         binding.listTimeline.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-            val alert = items.getOrNull(position)?.alert
-            if (alert != null) startActivity(DetailActivity.intent(this, alert))
+            val item = items.getOrNull(position) ?: return@OnItemClickListener
+            when {
+                item.alert != null -> startActivity(DetailActivity.intent(this, item.alert))
+                item.event != null -> startActivity(DetailActivity.eventIntent(this, item.event))
+                // footer 占位行等无数据 → 忽略
+                else -> Unit
+            }
         }
 
         // 滚动到底 → 加载更早 Room 历史(分页)
@@ -118,8 +123,11 @@ class TimelineActivity : AppCompatActivity() {
             val item = alertItem(gs, a)
             if (showSystem || !item.isSystem) next.add(item)
         }
-        // 追加已加载的 Room 历史(更早记录,按时间倒序)
-        next.addAll(historyItems)
+        // 追加已加载的 Room 历史(更早记录,按时间倒序)——
+        // 回归修复:历史同样按当前 showSystem 状态过滤,切换开关即时生效
+        for (h in historyItems) {
+            if (showSystem || !h.isSystem) next.add(h)
+        }
         items = next
         if (adapter == null) {
             adapter = TimelineAdapter(this, next)
@@ -148,10 +156,10 @@ class TimelineActivity : AppCompatActivity() {
             val appended = ArrayList<TimelineItem>()
             for (e in events) {
                 val item = eventItem(gs2, e)
-                if (showSystem || !item.isSystem) {
-                    val key = "${item.tsNs}:${item.title}"
-                    if (seen.add(key)) appended.add(item)
-                }
+                // 始终缓存全部历史(不过滤),展示阶段由 refreshTimeline 按当前开关过滤,
+                // 避免"加载时开关为关 → 系统事件被丢弃 → 打开开关后也无法找回"。
+                val key = "${item.tsNs}:${item.title}"
+                if (seen.add(key)) appended.add(item)
             }
             historyItems.addAll(appended)
             // 游标推进:取本页最旧事件 tsNs;无更多(空页)则置为耗尽
@@ -175,8 +183,10 @@ class TimelineActivity : AppCompatActivity() {
             "某应用"
         }
         val sub = "$who · ${fmtTs(e.tsNs)}"
-        val isSys = CtxProbe.isSystemComponent(e.uid, e.pkgName)
-        return TimelineItem(title, sub, null, isSys, e.tsNs)
+        // 回归修复:uid<0(T0 未知来源)不算"系统调用"——它可能是恶意第三方,
+        // 关闭"显示系统调用"开关时不应被隐藏(仅隐藏可归因的系统进程/系统包)。
+        val isSys = e.uid >= 0 && CtxProbe.isSystemComponent(e.uid, e.pkgName)
+        return TimelineItem(title, sub, null, isSys, e.tsNs, e)
     }
 
     private fun alertItem(gs: GuardService, a: VerdictEntryData): TimelineItem {
@@ -225,6 +235,8 @@ class TimelineActivity : AppCompatActivity() {
         val alert: VerdictEntryData?,
         val isSystem: Boolean = false,
         val tsNs: Long = 0L,
+        /** 回归修复:普通事件引用 —— 点击事件行跳转事件详情模式。告警行为 null。*/
+        val event: ProbeEvent? = null,
     )
 
     private class TimelineAdapter(
