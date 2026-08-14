@@ -1,0 +1,55 @@
+SensorGuard
+Copyright 2026 yukong121 / yukong151
+
+This product includes software developed as original work by the SensorGuard
+project team, licensed under the Apache License, Version 2.0.
+
+-------------------------------------------------------------------------
+ALGORITHM ORIGINALITY AND ATTRIBUTION NOTICE
+-------------------------------------------------------------------------
+
+The statistical and machine-learning algorithms implemented in the Rust core
+(core-rust/) are ORIGINAL implementations written from public mathematical
+formulas. No third-party statistical/machine-learning library is linked.
+
+The following are standard published methods; their implementation here is
+original code, not a copy of any specific library or project:
+
+  * Kolmogorov-Smirnov two-sample test (core-rust/src/stats/ks.rs)
+      - Classical non-parametric test (Kolmogorov 1933; Smirnov 1939).
+  * Lomb-Scargle periodogram (core-rust/src/stats/lomb.rs)
+      - Classic spectral analysis for unevenly sampled data
+        (Lomb 1976; Scargle 1982).
+  * Kullback-Leibler divergence (core-rust/src/stats/kl.rs)
+      - Information-theoretic divergence (Kullback & Leibler 1951).
+  * Shannon entropy (core-rust/src/stats/entropy.rs)
+      - Classical information entropy (Shannon 1948).
+  * Isolation Forest (core-rust/src/iforest.rs)
+      - Anomaly detection via isolation trees
+        (Liu, Ting, Zhou, "Isolation Forest", ICDM 2008).
+        The inference engine (flat node arrays, INT8-quantized weights,
+        recursion-free traversal) is original implementation.
+
+Design inspiration and research background (acknowledged with thanks):
+
+  * Academic papers on accelerometer/IMU-based privacy attacks that informed
+    the threat model and detection rationale:
+      - Spearphone (NDSS 2020)
+      - AccelEve (SenSys 2019)
+      - EarSpy (2022)
+  * Open-source engineering references for store-listing copy and background
+    service strategy (no code copied):
+      - Access Dots
+      - PilferShush Jammer
+      - TrackerControl
+
+No code from the above projects has been copied into this repository.
+
+-------------------------------------------------------------------------
+AI-GENERATED CONTENT NOTICE
+-------------------------------------------------------------------------
+
+Parts of the design documentation under this repository were drafted with
+the assistance of LLM tools acting as research assistants, and are provided
+"as-is" for review. The implementation code has been authored and reviewed
+by humans. See the repository documentation for details.
