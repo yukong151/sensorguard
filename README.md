@@ -2,6 +2,8 @@
 
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
+**简体中文** | [English](README_EN.md)
+
 轻量级 **Android 传感器隐私监测** 工具。实时监控 App 对麦克风、摄像头、IMU 等传感器的调用,识别异常采样模式,引导系统隐私设置。**全部本地处理,零网络权限**。
 
 ## 功能
@@ -61,7 +63,7 @@ cd core-rust && cargo build --release --target aarch64-linux-android
 ## 许可与致谢
 
 - **许可证**:[Apache License 2.0](LICENSE)
-- **算法原创性声明与参考致谢**:见 [NOTICE](NOTICE)
+- **算法原创性声明与参考致谢**:[NOTICE](NOTICE)([中文版](NOTICE_CN.md))
 
 核心算法(KS 检验、Lomb-Scargle、Isolation Forest、KL/熵)均为基于公开数学公式的**原创实现**,不链接第三方统计库。设计灵感来自 Spearphone (NDSS'20)、AccelEve (SenSys'19)、EarSpy (2022) 等学术研究,以及 Access Dots、PilferShush Jammer、TrackerControl 等开源项目的工程思路(无代码复用)。
 
