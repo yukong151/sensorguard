@@ -31,6 +31,7 @@ import com.yuexiao12.sensorguard.jni.VerdictReader
 import com.yuexiao12.sensorguard.logic.ActionRouter
 import com.yuexiao12.sensorguard.logic.HealthLevel
 import com.yuexiao12.sensorguard.logic.SystemHealth
+import com.yuexiao12.sensorguard.probe.CameraServiceParser
 import com.yuexiao12.sensorguard.probe.CameraProbe
 import com.yuexiao12.sensorguard.probe.LocationProbe
 import com.yuexiao12.sensorguard.probe.NetProbe
@@ -101,6 +102,9 @@ class GuardService : Service() {
     /** W12/T2:上次 Shizuku 轮询快照(uid:op -> client),用于 diff 推 START/STOP/TICK。*/
     private val shizukuLast = ConcurrentHashMap<String, SensorServiceParser.SensorClient>()
 
+    /** 内测版相机归因:上次 Shizuku 相机轮询快照(pkg:pid -> client),用于 diff 推 START/STOP。*/
+    private val shizukuCameraLast = ConcurrentHashMap<String, CameraServiceParser.CameraClient>()
+
     /**
      * W12/T2: 包指纹(hex) -> (内层包名, uid) 反向映射,供 UI 在告警/事件上做归属展示。
      * P2-6: 启动时从 Room attribution 表加载,运行时新映射同步写入 Room(跨重启持久化)。
@@ -159,16 +163,18 @@ class GuardService : Service() {
 
         // P2-6: 初始化归因 DAO,从 Room 加载持久化的 uid→包名映射到内存。
         // 在探针启动前完成,确保首批事件即可命中已有映射(UI 归因不闪烁)。
+        // Room 读走 sg-history 后台线程,避免主线程禁入警告。
         attributionDao = db.attributionDao()
-        try {
-            for (row in attributionDao!!.all()) {
-                pkgHashInfo[row.pkgHashHex] = Pair(row.pkgName, row.uid)
+        historyExecutor.execute {
+            try {
+                var n = 0
+                for (row in attributionDao!!.all()) {
+                    pkgHashInfo[row.pkgHashHex] = Pair(row.pkgName, row.uid); n++
+                }
+                if (n > 0) Log.i("SG", "attribution: loaded $n entries from Room")
+            } catch (e: Exception) {
+                Log.w("SG", "attribution: load from Room failed", e)
             }
-            if (pkgHashInfo.isNotEmpty()) {
-                Log.i("SG", "attribution: loaded ${pkgHashInfo.size} entries from Room")
-            }
-        } catch (e: Exception) {
-            Log.w("SG", "attribution: load from Room failed", e)
         }
 
         // W4: 启动探针(公开 API 等效替代 AppOps 监听,见各探针注释)
@@ -192,8 +198,11 @@ class GuardService : Service() {
         // start() 内部注册权限/binder 监听器并请求授权: 晚授权(用户在 Shizuku 内手动授予)
         // 或 Shizuku 重启时,监听器回调会自动激活探针(Step 3 打磨)。
         // P1-4:先检测 Shizuku App 是否安装,未安装时跳过探针创建(零开销降级)。
-        if (ShizukuProbe.isShizukuInstalled(this)) {
-            shizukuProbe = ShizukuProbe { onShizukuClients(it) }.also { it.start() }
+if (ShizukuProbe.isShizukuInstalled(this)) {
+            shizukuProbe = ShizukuProbe(
+                { onShizukuClients(it) },
+                { onShizukuCameraClients(it) },
+            ).also { it.start() }
         } else {
             Log.i("SG", "Shizuku not installed, T2 probe disabled (graceful degradation)")
         }
@@ -246,6 +255,54 @@ class GuardService : Service() {
     }
 
     /**
+     * 内测版相机精确归因 diff 处理(Shizuku T2 通道)。
+     * 每次轮询的 `dumpsys media.camera` Active Camera Clients 与上次对比,
+     * 新增即推 START(精确包名)、消失即推 STOP,解决 CameraProbe(T0) 无法归因的盲区。
+     * 相机 uid 无法直接获得(media.camera 只给包名+PID),uid 用 -1 保持与 T0 一致,
+     * 但 pkgName 精确 -> UI 归因显示真实包名。
+     */
+    private fun onShizukuCameraClients(clients: List<CameraServiceParser.CameraClient>) {
+        val nowNs = System.currentTimeMillis() * 1_000_000L
+        val curr = clients.associateBy { "${it.packageName}:${it.pid}" }
+        // STOP:上次有、本次没有
+        for ((k, c) in shizukuCameraLast) {
+            if (k !in curr) {
+                pushProbeEvent(
+                    ProbeEvent(
+                        tsNs = nowNs,
+                        uid = -1,
+                        pkgName = c.packageName,
+                        pkgHash = pkgHashFromName(c.packageName),
+                        op = SgEnum.OP_CAMERA,
+                        phase = SgEnum.PHASE_STOP,
+                        tier = SgEnum.TIER_T2_ENHANCED,
+                        source = "CAMERA-SHIZUKU",
+                    )
+                )
+            }
+        }
+        // START:新增
+        for ((k, c) in curr) {
+            if (!shizukuCameraLast.containsKey(k)) {
+                pushProbeEvent(
+                    ProbeEvent(
+                        tsNs = nowNs,
+                        uid = -1,
+                        pkgName = c.packageName,
+                        pkgHash = pkgHashFromName(c.packageName),
+                        op = SgEnum.OP_CAMERA,
+                        phase = SgEnum.PHASE_START,
+                        tier = SgEnum.TIER_T2_ENHANCED,
+                        source = "CAMERA-SHIZUKU",
+                    )
+                )
+            }
+        }
+        shizukuCameraLast.clear()
+        shizukuCameraLast.putAll(curr)
+    }
+
+    /**
      * W4: 探针事件 -> 时间线缓冲 + FlatBuffers OpEvent -> sg_push_op + 活跃组合注册表。
      * 时间基为 wall-clock ns(与 batchTick 同一时钟源);START 注册组合、STOP 注销,
      * 保证 TickInput.active_pairs 反映当前真实活跃状态。CtxTag 为 CtxProbe 诚实快照
@@ -259,21 +316,9 @@ class GuardService : Service() {
         // W12/T2: 维护 包指纹 -> (内层包名, uid) 反向映射,供 UI 归因展示。
         // P2-6: 新映射同步写入 Room(跨重启持久化);已存在则 IGNORE 跳过。
         val hex = pkgHex(ev.pkgHash)
-        if (!pkgHashInfo.containsKey(hex)) {
-            pkgHashInfo[hex] = Pair(ev.pkgName ?: "", ev.uid)
-            try {
-                attributionDao?.insertIfAbsent(
-                    com.yuexiao12.sensorguard.db.AttributionEntity(
-                        pkgHashHex = hex,
-                        pkgName = ev.pkgName ?: "",
-                        uid = ev.uid,
-                        firstSeenMs = System.currentTimeMillis(),
-                    )
-                )
-            } catch (e: Exception) {
-                Log.w("SG", "attribution: persist failed for $hex", e)
-            }
-        }
+        // 首次出现才需写归因表;内存映射同步更新(UI 即时可用),Room 落库在后台执行。
+        val needAttrInsert = !pkgHashInfo.containsKey(hex)
+        if (needAttrInsert) pkgHashInfo[hex] = Pair(ev.pkgName ?: "", ev.uid)
         val opEv = OpEventData(
             ev.tsNs, ev.uid, ev.pkgHash, ev.op, ev.phase,
             CtxProbe.snapshot(ev.uid, ev.pkgName, ev.op), ev.samplingPeriodUs,
@@ -287,7 +332,31 @@ class GuardService : Service() {
             SgEnum.PHASE_START -> addSharedActivePair(ev.uid, ev.op, ev.pkgHash)
             SgEnum.PHASE_STOP -> removeSharedActivePair(ev.uid, ev.op)
         }
-        if (persist) persistEncrypted(ev)
+        if (persist) {
+            // Room 访问(归因持久化 + 加密落库)统一走 sg-history 单线程,避免探针回调
+            // (可能位于主线程)触碰 Room 主线程禁入而 crash。单线程执行器保证落库顺序。
+            val attrHex = hex
+            val attrPkg = ev.pkgName
+            val attrUid = ev.uid
+            val mustInsertAttr = needAttrInsert
+            historyExecutor.execute {
+                if (mustInsertAttr) {
+                    try {
+                        attributionDao?.insertIfAbsent(
+                            com.yuexiao12.sensorguard.db.AttributionEntity(
+                                pkgHashHex = attrHex,
+                                pkgName = attrPkg ?: "",
+                                uid = attrUid,
+                                firstSeenMs = System.currentTimeMillis(),
+                            )
+                        )
+                    } catch (e: Exception) {
+                        Log.w("SG", "attribution: persist failed for $attrHex", e)
+                    }
+                }
+                persistEncrypted(ev)
+            }
+        }
     }
 
     /**

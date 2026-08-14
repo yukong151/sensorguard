@@ -32,6 +32,7 @@ import com.yuexiao12.sensorguard.BuildConfig
  */
 class ShizukuProbe(
     private val callback: (List<SensorServiceParser.SensorClient>) -> Unit,
+    private val cameraCallback: (List<CameraServiceParser.CameraClient>) -> Unit = {},
 ) {
     private val scheduler: ScheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "sg-shizuku").apply { isDaemon = true } }
@@ -189,6 +190,19 @@ class ShizukuProbe(
                 callback(clients)
             } catch (e: Exception) {
                 Log.w("SG", "Shizuku callback error (non-fatal, loop continues)", e)
+            }
+            // 内测版相机精确归因: 经 Shizuku 读 dumpsys media.camera 的 Active Camera Clients,
+            // 解析出当前活跃相机占用者包名,消除 CameraProbe(T0) 无法归因的盲区。
+            try {
+                val camOut = execShell("dumpsys media.camera 2>/dev/null")
+                val cams = CameraServiceParser.parse(camOut)
+                if (cams.isNotEmpty()) {
+                    Log.i("SG", "Shizuku camera: ${cams.size} clients, " +
+                        "pkg=${cams[0].packageName} pid=${cams[0].pid}")
+                }
+                cameraCallback(cams)
+            } catch (e: Exception) {
+                Log.w("SG", "Shizuku camera dumpsys failed (non-fatal)", e)
             }
         } catch (t: Throwable) {
             Log.w("SG", "Shizuku refresh unexpected error (non-fatal)", t)
