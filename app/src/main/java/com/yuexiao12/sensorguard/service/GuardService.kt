@@ -45,6 +45,7 @@ import com.yuexiao12.sensorguard.probe.SensorServiceParser
 import com.yuexiao12.sensorguard.store.EncryptedEventStore
 import java.util.ArrayDeque
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -54,6 +55,9 @@ class GuardService : Service() {
 
     private lateinit var scheduler: ScheduledExecutorService
     private val tickBuf = ByteArray(64 * 1024)
+
+    /** Room 历史分页加载线程(仅读解密,与 batchTick 写路径隔离,不阻塞 sg-tick)。*/
+    private lateinit var historyExecutor: ExecutorService
 
     /** 告警环形日志(内存,W8 UI 读取;W7 起迁移 Room 加密落库)。*/
     private val alertLog: ArrayDeque<VerdictEntryData> = ArrayDeque()
@@ -136,6 +140,9 @@ class GuardService : Service() {
         }
         scheduler.scheduleWithFixedDelay(::batchTick, 5, 60, TimeUnit.SECONDS)
         scheduler.scheduleWithFixedDelay(::destroyExpiredDek, 1, 24, TimeUnit.HOURS)
+        historyExecutor = Executors.newSingleThreadExecutor { r ->
+            Thread(r, "sg-history").apply { isDaemon = true }
+        }
 
         // W7 (文档 §8.2):加密事件存储 —— KEK(AndroidKeyStore,StrongBox 优先)+ DEK 编排 +
         // keychain(Room)+ counter(AndroidKeyStore+AES-GCM)+ 唯一性守卫。
@@ -641,8 +648,36 @@ class GuardService : Service() {
         eventLog.reversed().toList()
     }
 
+    /**
+     * 时间线滚动加载:从 Room 加密历史分页解密回读 tsNs < beforeTsNs 的更早事件。
+     * 在后台线程执行(历史 executor),结果经 onResult 回调回主线程;避免阻塞 UI/写路径。
+     * 内存 512 条(eventLog)之上追加的是 Room 全量历史,解决"512 条后数据停更"。
+     */
+    fun loadMoreEvents(beforeTsNs: Long, onResult: (List<ProbeEvent>) -> Unit) {
+        historyExecutor.execute {
+            val events = try {
+                eventStore.loadBefore(beforeTsNs, HISTORY_PAGE)
+            } catch (e: Exception) {
+                Log.w("SG", "loadMoreEvents failed: ${e.message}")
+                emptyList()
+            }
+            // 解密读在后台线程;回调回主线程,避免 UI 线程触碰 Room
+            android.os.Handler(android.os.Looper.getMainLooper()).post { onResult(events) }
+        }
+    }
+
+    /** 时间线滚动加载:最早可见事件的 tsNs(用于分页游标),无则返回 0。*/
+    fun earliestEventTs(): Long = synchronized(eventLog) {
+        eventLog.firstOrNull()?.tsNs ?: 0L
+    }
+
     /** W12/T2: 供 UI 查询某包指纹对应的(内层包名, uid),用于告警/事件归因展示;查不到返回 null。*/
-    fun attributionFor(hex: String): Pair<String, Int>? = pkgHashInfo[hex]
+    fun attributionFor(hex: String): Pair<String, Int>? {
+        pkgHashInfo[hex]?.let { return it }
+        // 兜底:内存映射缺失时查 Room(wipe 后重载 / 偶发未建映射),避免告警行丢失应用名
+        val row = try { attributionDao?.get(hex) } catch (_: Exception) { null }
+        return row?.let { Pair(it.pkgName, it.uid) }
+    }
 
     /**
      * W8 (Debug 演示):注入一条演示告警(仅 debug 构建可调用,release 下 BuildConfig.DEBUG=false 直接 no-op)。
@@ -726,6 +761,7 @@ class GuardService : Service() {
         SgErrors.health = null
         instance = null
         scheduler.shutdownNow()
+        historyExecutor.shutdownNow()
         SgNative.sgShutdown()
         super.onDestroy()
     }
@@ -740,6 +776,9 @@ class GuardService : Service() {
         private const val SEVERITY_CRITICAL = 90
         private const val ALERT_LOG_CAP = 512
         private const val EVENT_LOG_CAP = 512
+
+        /** 时间线滚动加载分页:一次加载条数(Room 解密成本 ~500µs/条,单线程分批)。*/
+        private const val HISTORY_PAGE = 200
 
         /** W8 (文档 §6):每日聚合摘要通知 id 与触发小时。*/
         private const val NOTIF_SUMMARY_ID = 3010

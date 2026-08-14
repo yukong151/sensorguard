@@ -123,4 +123,32 @@ class EncryptedEventStoreTest {
         assertTrue(loaded.any { it.tsNs == 1_700_000_000_000_000_001L })
         assertTrue(loaded.any { it.tsNs == 1_700_000_000_000_000_002L })
     }
+
+    @Test
+    fun `loadBefore returns events strictly older than cursor, newest first`() {
+        val (s, _) = store()
+        repeat(5) { s.saveEvent(event(it.toLong())) } // tsNs = base+0..4
+        // 游标 = base+2:应只返回 base+0、base+1(更早),不含 base+2 本身
+        val loaded = s.loadBefore(1_700_000_000_000_000_002L, 10)
+        assertEquals(2, loaded.size)
+        assertEquals(1_700_000_000_000_000_001L, loaded[0].tsNs) // 最新在前
+        assertEquals(1_700_000_000_000_000_000L, loaded[1].tsNs)
+    }
+
+    @Test
+    fun `loadBefore pagination advances across pages`() {
+        val (s, _) = store()
+        repeat(5) { s.saveEvent(event(it.toLong())) }
+        // 第一页:取 < base+5 的最近 2 条 -> base+4、base+3
+        val p1 = s.loadBefore(1_700_000_000_000_000_005L, 2)
+        assertEquals(listOf(4L, 3L), p1.map { it.tsNs - 1_700_000_000_000_000_000L })
+        // 第二页:以上一页最旧为游标 -> base+2、base+1
+        val p2 = s.loadBefore(p1.last().tsNs, 2)
+        assertEquals(listOf(2L, 1L), p2.map { it.tsNs - 1_700_000_000_000_000_000L })
+        // 第三页 -> 只剩 base+0
+        val p3 = s.loadBefore(p2.last().tsNs, 2)
+        assertEquals(listOf(0L), p3.map { it.tsNs - 1_700_000_000_000_000_000L })
+        // 已到底:空页
+        assertEquals(0, s.loadBefore(p3.last().tsNs, 2).size)
+    }
 }

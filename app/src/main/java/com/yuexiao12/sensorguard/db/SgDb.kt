@@ -91,6 +91,9 @@ class RoomEventSink(private val dao: EventDao) : EventSink {
     override fun recent(limit: Int): List<EventRow> =
         dao.recent(limit).map { EventRow(it.tsNs, it.keyId, it.record) }
 
+    override fun before(beforeTsNs: Long, limit: Int): List<EventRow> =
+        dao.before(beforeTsNs, limit).map { EventRow(it.tsNs, it.keyId, it.record) }
+
     override fun clearAll() = dao.clearAll()
 
     override fun count(): Long = dao.count()

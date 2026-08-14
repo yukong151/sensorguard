@@ -22,6 +22,10 @@ interface EventDao {
     @Query("SELECT * FROM event ORDER BY tsNs DESC LIMIT :limit")
     fun recent(limit: Int): List<EventEntity>
 
+    /** 分页:按时间倒序取 tsNs < beforeTsNs 的最近 limit 条(时间线滚动加载更早历史)。*/
+    @Query("SELECT * FROM event WHERE tsNs < :beforeTsNs ORDER BY tsNs DESC LIMIT :limit")
+    fun before(beforeTsNs: Long, limit: Int): List<EventEntity>
+
     /** 遗忘权(§8.2):密文本身也可删除。*/
     @Query("DELETE FROM event")
     fun clearAll()

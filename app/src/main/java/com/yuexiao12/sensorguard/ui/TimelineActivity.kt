@@ -8,6 +8,7 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AbsListView
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.TextView
@@ -28,11 +29,15 @@ import java.util.Locale
  * W8 (文档 §3): A2 事件时间线 —— 探针事件 + 告警(新→旧),每 2s 轮询;
  * 点击告警行 → A3 风险详情/引导页。ViewBinding 布局,无 Compose。
  *
+ * 滚动加载增强(512 停更修复):
+ *  - 内存缓冲仅保留最新 512 条(eventLog);滚动到底自动从 Room 加密历史分页解密回读更早事件,
+ *    与内存段合并展示(按 tsNs 去重),历史不再被 512 上限截断。
+ *  - 适配器尾部附加"加载更早记录…"占位行,滚动到底触发下一页;无更多历史时移除。
+ *
  * 事件时间线增强(W12/T2):
- *  - 标题行展示 [操作] + 具体传感器名(如 "lsm6dso Accelerometer") + 相位(开始/停止);
- *  - 副标题展示归属:DEBUG 构建显示"宿主 App + 包名 + SDK 内部类"(见 AppAttribution),
- *    商店版(store flavor)仅显示"某应用"(不向终端用户明示包名,合规要求);内测版(internal)显示完整归属;
- *  - 告警行同样带归因(包指纹 → 内层包名/uid → 宿主 App)。
+ *  - 标题行展示 [操作] + 具体传感器名 + 相位(开始/停止);
+ *  - 副标题展示归属:内测版(internal)完整显示包名/宿主 App(见 AppAttribution),
+ *    商店版(store flavor)仅显示"某应用"(合规要求);告警行同样带归因。
  */
 class TimelineActivity : AppCompatActivity() {
 
@@ -44,8 +49,14 @@ class TimelineActivity : AppCompatActivity() {
     private var items: List<TimelineItem> = emptyList()
     private var adapter: TimelineAdapter? = null
 
-    /** 筛选开关:true=显示系统调用(默认,证明 App 真实有效),false=仅第三方 App。*/
+    /** 筛选开关:true=显示系统调用(默认),false=仅第三方 App。*/
     private var showSystem = true
+
+    /** Room 历史分页状态。historyCursor=0 表示未初始化,∞ 表示从最新探底;加载后取最旧 tsNs 推进。*/
+    private val historyItems = ArrayList<TimelineItem>()
+    private var historyCursor = 0L
+    private var historyLoading = false
+    private var historyExhausted = false
 
     private val refresh = object : Runnable {
         override fun run() {
@@ -74,6 +85,15 @@ class TimelineActivity : AppCompatActivity() {
             val alert = items.getOrNull(position)?.alert
             if (alert != null) startActivity(DetailActivity.intent(this, alert))
         }
+
+        // 滚动到底 → 加载更早 Room 历史(分页)
+        binding.listTimeline.setOnScrollListener(object : AbsListView.OnScrollListener {
+            override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) = Unit
+            override fun onScroll(view: AbsListView?, firstVisible: Int, visibleCount: Int, total: Int) {
+                if (total == 0) return
+                if (firstVisible + visibleCount >= total - 1) maybeLoadMore()
+            }
+        })
     }
 
     override fun onStart() {
@@ -98,6 +118,8 @@ class TimelineActivity : AppCompatActivity() {
             val item = alertItem(gs, a)
             if (showSystem || !item.isSystem) next.add(item)
         }
+        // 追加已加载的 Room 历史(更早记录,按时间倒序)
+        next.addAll(historyItems)
         items = next
         if (adapter == null) {
             adapter = TimelineAdapter(this, next)
@@ -107,6 +129,37 @@ class TimelineActivity : AppCompatActivity() {
             adapter!!.addAll(next)
             adapter!!.notifyDataSetChanged()
         }
+        adapter?.showFooter(!historyExhausted)
+    }
+
+    /** 滚动到底触发:从 Room 加载早于当前最早事件的一页历史,追加到列表尾部。*/
+    private fun maybeLoadMore() {
+        val gs = GuardService.instance ?: return
+        if (historyLoading || historyExhausted) return
+        val cursor = if (historyCursor == 0L) Long.MAX_VALUE else historyCursor
+        historyLoading = true
+        adapter?.showFooter(true)
+        gs.loadMoreEvents(cursor) { events ->
+            historyLoading = false
+            val gs2 = GuardService.instance ?: return@loadMoreEvents
+            // 去重:内存段与历史段可能重叠(同一事件既在内存缓冲也在 Room 加密库)
+            val seen = HashSet<String>()
+            for (i in items) if (i.tsNs != 0L) seen.add("${i.tsNs}:${i.title}")
+            val appended = ArrayList<TimelineItem>()
+            for (e in events) {
+                val item = eventItem(gs2, e)
+                if (showSystem || !item.isSystem) {
+                    val key = "${item.tsNs}:${item.title}"
+                    if (seen.add(key)) appended.add(item)
+                }
+            }
+            historyItems.addAll(appended)
+            // 游标推进:取本页最旧事件 tsNs;无更多(空页)则置为耗尽
+            historyCursor = appended.lastOrNull()?.tsNs ?: 0L
+            if (appended.isEmpty()) historyExhausted = true
+            adapter?.showFooter(!historyExhausted)
+            refreshTimeline()
+        }
     }
 
     private fun eventItem(gs: GuardService, e: ProbeEvent): TimelineItem {
@@ -115,22 +168,32 @@ class TimelineActivity : AppCompatActivity() {
         val phase = if (e.isStart) "开始" else "停止"
         val title = "[$opTag] $sensor · $phase"
         // 内测版(internal)显示归属;商店版(store)仅中性措辞
-        val who = AppAttribution.resolve(this, e.pkgName, e.uid) ?: "某应用"
+        val who = if (BuildConfig.IS_INTERNAL) {
+            AppAttribution.resolve(this, e.pkgName, e.uid)
+                ?: if (e.pkgName.isNullOrBlank()) "uid=${e.uid}" else e.pkgName
+        } else {
+            "某应用"
+        }
         val sub = "$who · ${fmtTs(e.tsNs)}"
         val isSys = CtxProbe.isSystemComponent(e.uid, e.pkgName)
-        return TimelineItem(title, sub, null, isSys)
+        return TimelineItem(title, sub, null, isSys, e.tsNs)
     }
 
     private fun alertItem(gs: GuardService, a: VerdictEntryData): TimelineItem {
         val title = "⚠ ${kindName(a.kind)} sev=${a.severity} rule=#${a.ruleId} · ${opName(a.op)}"
         val hex = a.pkgHash.joinToString("") { "%02X".format(it) }
         val info = gs.attributionFor(hex)
-        val who = info?.let { AppAttribution.resolve(this, it.first, it.second) } ?: "某应用"
-        // 内测版(internal)附带包指纹前 8 位,便于核对;商店版(store)隐藏一切标识
+        // 内测版(internal):完整显示应用归属;商店版(store)一律中性措辞
+        val who = if (BuildConfig.IS_INTERNAL) {
+            info?.let { AppAttribution.resolve(this, it.first, it.second) }
+                ?: if (hex == "000000000000000000000000") "未知来源" else "某应用"
+        } else {
+            "某应用"
+        }
         val idPart = if (BuildConfig.IS_INTERNAL && info != null) " · 包指纹 ${hex.take(8)}" else ""
         val sub = "$who$idPart · ${fmtTs(a.windowStartNs)}"
         val isSys = info?.let { CtxProbe.isSystemComponent(it.second, it.first) } ?: false
-        return TimelineItem(title, sub, a, isSys)
+        return TimelineItem(title, sub, a, isSys, a.windowStartNs)
     }
 
     private fun kindName(k: Int): String = when (k) {
@@ -155,20 +218,45 @@ class TimelineActivity : AppCompatActivity() {
 
     private fun fmtTs(tsNs: Long): String = timeFmt.format(Date(tsNs / 1_000_000L))
 
-    /** 时间线单行模型:标题 + 副标题 + (告警时)归属的 VerdictEntryData + 是否系统调用(供筛选)。*/
+    /** 时间线单行模型:标题 + 副标题 + (告警时)归属的 VerdictEntryData + 是否系统调用(供筛选)+ tsNs(分页游标/去重)。*/
     private data class TimelineItem(
         val title: String,
         val sub: String,
         val alert: VerdictEntryData?,
         val isSystem: Boolean = false,
+        val tsNs: Long = 0L,
     )
 
     private class TimelineAdapter(
         context: Context,
         items: List<TimelineItem>,
     ) : ArrayAdapter<TimelineItem>(context, 0, items) {
+
+        private var footerVisible = false
+
+        /** 显示/隐藏"加载更早"页脚(adapter 尾部附加一项,不参与数据 items)。*/
+        fun showFooter(show: Boolean) {
+            if (footerVisible == show) return
+            footerVisible = show
+            notifyDataSetChanged()
+        }
+
+        override fun getCount(): Int = super.getCount() + (if (footerVisible) 1 else 0)
+
+        override fun getItem(position: Int): TimelineItem? {
+            if (position >= super.getCount()) return null // footer 占位
+            return super.getItem(position)
+        }
+
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val item = getItem(position)!!
+            if (position >= super.getCount()) {
+                val v = convertView
+                    ?: LayoutInflater.from(context).inflate(R.layout.item_timeline, parent, false)
+                v.findViewById<TextView>(R.id.tvTitle).text = "加载更早记录…"
+                v.findViewById<TextView>(R.id.tvSub).text = "正在从本地加密历史读取"
+                return v
+            }
+            val item = super.getItem(position)!!
             val v = convertView
                 ?: LayoutInflater.from(context).inflate(R.layout.item_timeline, parent, false)
             v.findViewById<TextView>(R.id.tvTitle).text = item.title

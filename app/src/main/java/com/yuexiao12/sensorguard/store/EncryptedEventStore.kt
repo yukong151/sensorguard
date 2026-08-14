@@ -15,6 +15,7 @@ data class EventRow(val tsNs: Long, val keyId: Int, val record: ByteArray)
 interface EventSink {
     fun insert(tsNs: Long, keyId: Int, record: ByteArray): Long
     fun recent(limit: Int): List<EventRow>
+    fun before(beforeTsNs: Long, limit: Int): List<EventRow>
     fun clearAll()
     fun count(): Long
 }
@@ -49,6 +50,15 @@ class EncryptedEventStore(
         }
     }
 
+    /** 分页:解密回读 tsNs < beforeTsNs 的最近 limit 条更早历史(时间线滚动加载)。*/
+    fun loadBefore(beforeTsNs: Long, limit: Int): List<ProbeEvent> {
+        val rows = sink.before(beforeTsNs, limit)
+        return rows.map { row ->
+            val payload = dekManager.decrypt(row.keyId, row.record)
+            EventCodec.decode(payload)
+        }
+    }
+
     /** 遗忘权(§8.2):销毁全部 DEK 包裹密钥,密文瞬间变随机字节;并清空密文行。*/
     fun wipeAll() {
         dekManager.wipeAll()
@@ -71,6 +81,9 @@ class MemoryEventSink : EventSink {
 
     override fun recent(limit: Int): List<EventRow> =
         rows.asReversed().take(limit).toList()
+
+    override fun before(beforeTsNs: Long, limit: Int): List<EventRow> =
+        rows.filter { it.tsNs < beforeTsNs }.asReversed().take(limit).toList()
 
     override fun clearAll() = rows.clear()
     override fun count(): Long = rows.size.toLong()
