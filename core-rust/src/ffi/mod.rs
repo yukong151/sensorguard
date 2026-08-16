@@ -26,7 +26,6 @@ static IFOREST: Lazy<iforest::IForest> = Lazy::new(iforest::builtin_model);
 /// v1.0 证据分级由调用方(Kotlin)按设备能力评估后经 TickInput.tier 传入
 /// (§4 P4:T0 基础 / T1 标准)。T1 规则(106/107/111/117/118/119/120)在
 /// tier=0 的设备上按 min_tier 判定不触发,由规则引擎自动处理。
-
 // 文档 §5.4:v1.0 8 维特征(KS/Burst/KL/事件数/活跃时间/CV/昼夜占比/S_ctx),
 // feature_id 映射在 §9(v1.1 演进);v1.0 固定前 3 维 + 事件数。
 const FEATURE_KS: u8 = 0;
@@ -76,6 +75,7 @@ fn purpose_matches(purpose: u8, op: u8) -> bool {
 /// s_ctx: L1 上下文分数由上层计算,引擎默认 0.0;
 /// evidence_tier: 由 TickInput.tier 传入(见 §4 P4)。
 /// L4 (v1.1): L2/L3 均未定论时,Isolation Forest 打分,score ≥ 0.7 升级 ALERT。
+#[allow(clippy::too_many_arguments)] // JNI 桥接:聚合 Verdict 全部字段,参数多为契约设计而非可读性缺陷
 fn build_verdict<'a>(
     builder: &mut FlatBufferBuilder<'a>,
     r: &verdict::EvalResult,
@@ -381,6 +381,7 @@ pub extern "C" fn sg_push_op(buf: *const u8, len: usize) -> i32 {
         // W2 (文档 §4.1):FlatBuffers 反序列化 OpEvent,落入 24h 事件窗口。
         // W6:phase/ctx 一并落入窗口(时长配对 + 上下文快照,L2 规则输入)。
         // root::<OpEvent> 泛型读取(非 root_type,生成代码无 root_as_op_event)。
+        // nosemgrep: sg-no-unchecked-ptr-null -- 上方 line 378 已做 buf.is_null() guard
         let input = unsafe { slice::from_raw_parts(buf, len) };
         let event = match flatbuffers::root::<sg::OpEvent>(input) {
             Ok(e) => e,
@@ -456,6 +457,7 @@ pub extern "C" fn sg_tick(
             return E_INVALID_ARG;
         }
         // W2~W5 (文档 §4.1):TickInput → 评估 changed 窗口 → 组装 VerdictBatch。
+        // nosemgrep: sg-no-unchecked-ptr-null -- 上方 line 450 已做 in_buf.is_null() guard
         let input = unsafe { slice::from_raw_parts(in_buf, in_len) };
         let tick = match flatbuffers::root::<sg::TickInput>(input) {
             Ok(t) => t,

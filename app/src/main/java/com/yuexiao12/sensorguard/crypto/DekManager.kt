@@ -102,6 +102,7 @@ class DekManager(
     /** 生成随机 256-bit DEK,KEK 包裹后写入 keychain,返回其 key_id。*/
     private fun createDek(): Int {
         val raw = ByteArray(32).also { random.nextBytes(it) }
+        // nosemgrep: sg-no-hardcoded-secret-key -- raw 是上方 SecureRandom 填充(非字面量),规则无法跨变量溯源
         val dek = SecretKeySpec(raw, "AES")
         val wrapped = CryptoEngine.wrapDek(kek, dek)
         val id = nextKeyId()

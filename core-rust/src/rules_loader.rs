@@ -192,11 +192,7 @@ fn take_scalar(v: &str) -> Result<&str, &'static str> {
     for (i, c) in v.char_indices() {
         match c {
             '"' => in_str = !in_str,
-            ',' | '}' => {
-                if !in_str {
-                    return Ok(v[..i].trim());
-                }
-            }
+            ',' | '}' if !in_str => return Ok(v[..i].trim()),
             _ => {}
         }
     }

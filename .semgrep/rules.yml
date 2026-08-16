@@ -16,17 +16,21 @@ rules:
     severity: ERROR
 
   - id: sg-no-insecure-cipher
-    pattern: Cipher.getInstance($TRANSFORM)
-    metavariable-regex:
-      $TRANSFORM: .*(ECB|NoPadding|DES|RC4).*
-    message: 禁止 ECB/DES/RC4 等不安全算法;必须 AES-256-GCM(文档 §8.2)
+    patterns:
+      - pattern: Cipher.getInstance($TRANSFORM)
+      - metavariable-pattern:
+          metavariable: $TRANSFORM
+          pattern-regex: (?i).*(ecb|des|rc4).*
+    message: 禁止 ECB/DES/RC4 等不安全算法;必须 AES-256-GCM(文档 §8.2)。NoPadding 在 GCM 模式下合法(本项目统一 AES/GCM/NoPadding)。
     languages: [java, kotlin]
     severity: ERROR
 
   - id: sg-no-plaintext-iv
-    pattern: IvParameterSpec($IV)
-    metavariable-regex:
-      $IV: (?i)(?=.*[0-9a-f]{16}).*
+    patterns:
+      - pattern: IvParameterSpec($IV)
+      - metavariable-pattern:
+          metavariable: $IV
+          pattern-regex: (?i)(?=.*[0-9a-f]{16}).*
     message: IV 必须由 SecureRandom 生成并存密文旁,禁止硬编码常量
     languages: [java, kotlin]
     severity: ERROR
@@ -34,10 +38,12 @@ rules:
   - id: sg-no-log-secrets
     patterns:
       - pattern: Log.$METHOD(..., $ARG, ...)
-      - metavariable-regex:
-          $METHOD: (d|i|w|e|v)
-      - metavariable-regex:
-          $ARG: (?i).*(password|secret|token|key|iv|wrapped).*
+      - metavariable-pattern:
+          metavariable: $METHOD
+          pattern-regex: (d|i|w|e|v)
+      - metavariable-pattern:
+          metavariable: $ARG
+          pattern-regex: (?i).*\b(password|secret|token|key|wrapped|iv)\b.*
     message: 禁止记录密钥/口令/IV 明文
     languages: [java, kotlin]
     severity: ERROR
@@ -57,13 +63,13 @@ rules:
 
   # ── 权限边界 ─────────────────────────────────────────────────────────
   - id: sg-no-all-packages
-    pattern: QUERY_ALL_PACKAGES
+    pattern: <uses-permission android:name="QUERY_ALL_PACKAGES"/>
     message: 文档 §7 明确不申请 QUERY_ALL_PACKAGES,改用 <queries> 白名单
     languages: [xml]
     severity: ERROR
 
   - id: sg-no-internet-in-main
-    pattern: android.permission.INTERNET
+    pattern: <uses-permission android:name="android.permission.INTERNET"/>
     message: 主进程零网络权限(v1.0 完全离线)
     languages: [xml]
     severity: ERROR

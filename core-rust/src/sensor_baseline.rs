@@ -304,7 +304,7 @@ mod tests {
         // ks_d 在 [2..6] 小端;anomaly 在 [6];sample_hz 在 [7..11]
         let ks_bits = i32::from_le_bytes([bytes[2], bytes[3], bytes[4], bytes[5]]);
         let ks = f32::from_bits(ks_bits as u32);
-        assert!(ks >= 0.0 && ks < 0.1, "同分布 ks 应低, got {ks}");
+        assert!((0.0..0.1).contains(&ks), "同分布 ks 应低, got {ks}");
         assert_eq!(bytes[6], 0); // anomaly false
         let hz_bits = i32::from_le_bytes([bytes[7], bytes[8], bytes[9], bytes[10]]);
         let hz = f32::from_bits(hz_bits as u32);

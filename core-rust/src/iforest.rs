@@ -269,14 +269,18 @@ mod tests {
     fn normal_features() -> [f32; N_FEATURES] {
         let mut f = [0.0f32; N_FEATURES];
         // 正常样本:全部特征低于阈值(freq<30, ratio<0.4)
-        for i in 0..16 { f[i] = if i < 8 { 5.0 } else { 0.3 }; }
+        for (i, v) in f.iter_mut().enumerate() {
+            *v = if i < 8 { 5.0 } else { 0.3 };
+        }
         f
     }
 
     fn anomaly_features() -> [f32; N_FEATURES] {
         let mut f = [0.0f32; N_FEATURES];
         // 异常样本:全部特征高于阈值(freq>30, ratio>0.4)
-        for i in 0..16 { f[i] = if i < 8 { 500.0 } else { 0.9 }; }
+        for (i, v) in f.iter_mut().enumerate() {
+            *v = if i < 8 { 500.0 } else { 0.9 };
+        }
         f
     }
 
@@ -309,7 +313,7 @@ mod tests {
             *v = -1.0;
         }
         let s = model.score(&f);
-        assert!(s >= 0.0 && s <= 1.0, "缺失特征分数应在 [0,1],got {s}");
+        assert!((0.0..=1.0).contains(&s), "缺失特征分数应在 [0,1],got {s}");
     }
 
     #[test]

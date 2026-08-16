@@ -75,7 +75,7 @@ fn value_after_key<'a>(obj: &'a str, key: &str) -> Option<&'a str> {
 }
 
 /// 取平衡花括号对象(含 `{` `}`)。
-fn balanced_object<'a>(s: &'a str) -> Result<&'a str, &'static str> {
+fn balanced_object(s: &str) -> Result<&str, &'static str> {
     let s = s.trim_start();
     if !s.starts_with('{') {
         return Err("expected '{'");
@@ -107,10 +107,10 @@ fn balanced_object<'a>(s: &'a str) -> Result<&'a str, &'static str> {
 /// 取 `"key": "scalar"` 或 `"key": 123` 的标量字符串切片(去引号)。
 fn take_scalar(v: &str) -> Result<&str, &'static str> {
     let v = v.trim_start();
-    if v.starts_with('"') {
+    if let Some(rest) = v.strip_prefix('"') {
         // 字符串:找闭引号
-        let end = v[1..].find('"').ok_or("unterminated string")?;
-        Ok(&v[1..=end])
+        let end = rest.find('"').ok_or("unterminated string")?;
+        Ok(&rest[..=end])
     } else {
         // 数字/布尔:取到逗号/花括号/空白/换行为止
         let end = v.find(|c: char| c == ',' || c == '}' || c == ']' || c.is_whitespace())
