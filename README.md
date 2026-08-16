@@ -12,6 +12,22 @@
 
 - **实时仪表盘**:系统健康度、加密存储状态、今日事件统计
 - **事件时间线**:按时间顺序展示 App 对麦克风、摄像头、位置、IMU 的调用记录,精确 App 归属/包名(社区版核心能力)
+
+### 监测的传感器明细
+
+| 类别 | 传感器 | 获取方式 | 威胁面 |
+|---|---|---|---|
+| 隐私 | 麦克风 (RECORD_AUDIO) | 系统 AppOps 探针 | 偷录/语音指纹 |
+| 隐私 | 摄像头 (CAMERA) | CameraManager + AppOps 交叉校验 | 偷拍/拍摄 |
+| 隐私 | 位置 (FINE_LOCATION) | 系统探针 | 轨迹跟踪 |
+| IMU | 加速度计 (ACCEL) | Shizuku `dumpsys sensorservice` | 摇一摇广告/敲击键盘推断/活动指纹 |
+| IMU | 陀螺仪 (GYRO) | Shizuku `dumpsys sensorservice` | 摇一摇广告/敲击键盘推断 |
+| IMU | 磁力计 (MAG) | Shizuku `dumpsys sensorservice` | 指纹/方向推断 |
+| IMU | 气压计 (BARO) | Shizuku `dumpsys sensorservice` | 楼层定位/楼层指纹 |
+| IMU | 光线 (LIGHT) | Shizuku `dumpsys sensorservice` | 屏幕使用模式推断 |
+| IMU | 距离/接近 (PROX) | Shizuku `dumpsys sensorservice` | 通话/屏幕状态推断 |
+
+- IMU 类(加速度/陀螺/磁力/气压/光线/距离)经 Shizuku 精确归因到 uid + 包名,采样周期、批处理周期一并解析;其余传感器(如姿态、重力、线性加速度、旋转矢量、计步)在威胁面之外,不纳入监测。
 - **异常检测引擎**:20 条硬规则 + 3 项统计检验(KS 检验、Burst 熵、昼夜 KL 散度)+ Lomb-Scargle 节律一致性 + Isolation Forest(v1.1)
 - **精确归因**:经 Shizuku 读取 `dumpsys sensorservice` / `dumpsys media.camera`,将传感器/相机调用精确到真实 App 包名
 - **一键干预**:对麦克风/摄像头异常提供系统隐私设置深链引导

@@ -12,11 +12,28 @@ A lightweight **Android sensor privacy monitoring** tool. Monitors app access to
 
 - **Real-time dashboard**: system health, encrypted-storage status, today's event statistics
 - **Event timeline**: chronological record of app access to mic, camera, location, and IMU, with exact app attribution / package name (core community feature)
+- **Monitored sensors**: see the full sensor coverage table below
 - **Anomaly detection engine**: 20 hard rules + 3 statistical tests (KS test, burst entropy, diurnal KL divergence) + Lomb-Scargle periodicity + Isolation Forest (v1.1)
 - **Exact attribution**: via Shizuku, reads `dumpsys sensorservice` / `dumpsys media.camera` to attribute sensor/camera access to the exact app package
 - **One-tap intervention**: deep links to system privacy settings for mic/camera anomalies
 - **Encrypted logs**: AES-256-GCM storage, key protected by Android Keystore, one-tap wipe
 - **Fully offline**: main process has zero network permission; all inference runs in on-device Rust
+
+### Monitored sensors
+
+| Category | Sensor | Source | Threat surface |
+|---|---|---|---|
+| Privacy | Microphone (RECORD_AUDIO) | system AppOps probe | covert recording / voice fingerprinting |
+| Privacy | Camera (CAMERA) | CameraManager + AppOps cross-check | covert camera / photos |
+| Privacy | Location (FINE_LOCATION) | system probe | trajectory tracking |
+| IMU | Accelerometer (ACCEL) | Shizuku `dumpsys sensorservice` | shake-to-ad / keystroke inference / activity fingerprinting |
+| IMU | Gyroscope (GYRO) | Shizuku `dumpsys sensorservice` | shake-to-ad / keystroke inference |
+| IMU | Magnetometer (MAG) | Shizuku `dumpsys sensorservice` | fingerprinting / heading inference |
+| IMU | Barometer (BARO) | Shizuku `dumpsys sensorservice` | floor localization / floor fingerprinting |
+| IMU | Light (LIGHT) | Shizuku `dumpsys sensorservice` | screen-usage pattern inference |
+| IMU | Proximity (PROX) | Shizuku `dumpsys sensorservice` | call / screen-state inference |
+
+- IMU sensors (accelerometer/gyro/magnetometer/barometer/light/proximity) are attributed via Shizuku to exact uid + package, including sampling period and batching period. Other sensors (e.g. pose, gravity, linear acceleration, rotation vector, step counter) are outside the threat surface and not monitored.
 
 ## Architecture
 
