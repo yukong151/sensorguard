@@ -50,21 +50,14 @@ android {
             }
         }
     }
-    // W8/Final(文档 §3051/§3162): Product Flavor 分离「内测版 internal」与「商店版 store」。
-    // 归属显隐由 flavor 维度 BuildConfig.IS_INTERNAL 控制(配置化而非删除式):
-    //  - internal: 显示宿主 App 归属 / 包指纹(内测"怎么玩都可以");
-    //  - store:    永不显示任何身份标识(上架合规)。
-    // 开发期调试入口(演示告警 / 压测 / UserService debuggable)仍门控于 BuildConfig.DEBUG,
-    // 与 flavor 解耦,确保任何 release 构建都不含调试入口。
+    // W8/Final(文档 §3051/§3162)→ 社区版:双 flavor 已合并为单一 internal 变体。
+    // 社区版(面向安全研究者)显示 App 归属/包名——这是核心功能,不复用商店版隐藏身份逻辑。
+    // BuildConfig.IS_INTERNAL=true 恒真,控制归属展示;release 构建不含 DEBUG 门控调试入口。
     flavorDimensions += listOf("mode")
     productFlavors {
         create("internal") {
             dimension = "mode"
             buildConfigField("boolean", "IS_INTERNAL", "true")
-        }
-        create("store") {
-            dimension = "mode"
-            buildConfigField("boolean", "IS_INTERNAL", "false")
         }
     }
     compileOptions {

@@ -4,14 +4,14 @@
 
 **简体中文** | [English](README_EN.md)
 
-轻量级 **Android 传感器隐私监测** 工具。实时监控 App 对麦克风、摄像头、IMU 等传感器的调用,识别异常采样模式,引导系统隐私设置。**全部本地处理,零网络权限**。
+轻量级 **Android 传感器隐私监测** 工具。实时监控 App 对麦克风、摄像头、IMU 等传感器的调用,识别异常采样模式,引导系统隐私设置。**全部本地处理,零网络权限**。社区开源版,面向安全研究者,纯本地无后端。
 
 ## 功能
 
 - **实时仪表盘**:系统健康度、加密存储状态、今日事件统计
-- **事件时间线**:按时间顺序展示 App 对麦克风、摄像头、位置、IMU 的调用记录(内测版含精确 App 归属)
+- **事件时间线**:按时间顺序展示 App 对麦克风、摄像头、位置、IMU 的调用记录,精确 App 归属/包名(社区版核心能力)
 - **异常检测引擎**:20 条硬规则 + 3 项统计检验(KS 检验、Burst 熵、昼夜 KL 散度)+ Lomb-Scargle 节律一致性 + Isolation Forest(v1.1)
-- **精确归因**(内测版):经 Shizuku 读取 `dumpsys sensorservice` / `dumpsys media.camera`,将传感器/相机调用精确到真实 App 包名
+- **精确归因**:经 Shizuku 读取 `dumpsys sensorservice` / `dumpsys media.camera`,将传感器/相机调用精确到真实 App 包名
 - **一键干预**:对麦克风/摄像头异常提供系统隐私设置深链引导
 - **加密日志**:AES-256-GCM 加密存储,密钥由 Android Keystore 保护,一键擦除
 - **完全离线**:主进程零网络权限,所有推理在端侧 Rust 完成
@@ -42,9 +42,9 @@
 # Rust 核心(arm64)
 cd core-rust && cargo build --release --target aarch64-linux-android
 
-# Android APK(两个变体)
-./gradlew :app:assembleInternalDebug   # 内测版:显示 App 归属
-./gradlew :app:assembleStoreDebug      # 商店版:隐藏 App 身份标识
+# 社区版 APK(唯一构建变体,显示 App 归属)
+./gradlew :app:assembleInternalDebug   # 调试版
+./gradlew :app:assembleInternalRelease # 发布版(社区开源)
 ```
 
 环境要求:Android SDK、Android Studio JBR(Java 17)、Rust nightly + android target。

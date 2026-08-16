@@ -4,14 +4,14 @@
 
 [简体中文](README.md) | **English**
 
-A lightweight **Android sensor privacy monitoring** tool. Monitors app access to microphones, cameras, and IMU sensors in real time, detects anomalous sampling patterns, and guides users to system privacy settings. **All processing on-device, zero network access.**
+A lightweight **Android sensor privacy monitoring** tool. Monitors app access to microphones, cameras, and IMU sensors in real time, detects anomalous sampling patterns, and guides users to system privacy settings. **All processing on-device, zero network access.** Open-source community build, aimed at security researchers; fully local, no backend.
 
 ## Features
 
 - **Real-time dashboard**: system health, encrypted-storage status, today's event statistics
-- **Event timeline**: chronological record of app access to mic, camera, location, and IMU (with exact app attribution in the internal build)
+- **Event timeline**: chronological record of app access to mic, camera, location, and IMU, with exact app attribution / package name (core community feature)
 - **Anomaly detection engine**: 20 hard rules + 3 statistical tests (KS test, burst entropy, diurnal KL divergence) + Lomb-Scargle periodicity + Isolation Forest (v1.1)
-- **Exact attribution** (internal build): via Shizuku, reads `dumpsys sensorservice` / `dumpsys media.camera` to attribute sensor/camera access to the exact app package
+- **Exact attribution**: via Shizuku, reads `dumpsys sensorservice` / `dumpsys media.camera` to attribute sensor/camera access to the exact app package
 - **One-tap intervention**: deep links to system privacy settings for mic/camera anomalies
 - **Encrypted logs**: AES-256-GCM storage, key protected by Android Keystore, one-tap wipe
 - **Fully offline**: main process has zero network permission; all inference runs in on-device Rust
@@ -42,14 +42,14 @@ A lightweight **Android sensor privacy monitoring** tool. Monitors app access to
 # Rust core (arm64)
 cd core-rust && cargo build --release --target aarch64-linux-android
 
-# Android APK (two variants)
-./gradlew :app:assembleInternalDebug   # internal build: shows app attribution
-./gradlew :app:assembleStoreDebug      # store build: hides app identity
+# Android APK (single community build variant, shows app attribution)
+./gradlew :app:assembleInternalDebug   # debug build
+./gradlew :app:assembleInternalRelease # release build (community)
 ```
 
 Requirements: Android SDK, Android Studio JBR (Java 17), Rust nightly + android target.
 
-## Exact Attribution via Shizuku (internal build)
+## Exact Attribution via Shizuku
 
 Attributing sensor/camera events to exact app packages requires Shizuku. Activation and authorization steps: [docs/SHIZUKU_WIRELESS_SETUP.md](docs/SHIZUKU_WIRELESS_SETUP.md) (wireless debugging method; reactivation needed after every reboot).
 
