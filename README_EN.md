@@ -65,6 +65,7 @@ The full design document (threat model, algorithms, performance budget, complian
 - `docs/PIA.md`: privacy impact assessment
 - `docs/sensor_client_attribution_report.md`: alert attribution report
 - `docs/sbom.txt`: dependency SBOM (CycloneDX 1.5)
+- `docs/maintenance.md`: maintenance & governance, v1.1 roadmap
 
 For contribution, see [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md); version history is in [CHANGELOG.md](CHANGELOG.md).
 

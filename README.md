@@ -65,6 +65,7 @@ cd core-rust && cargo build --release --target aarch64-linux-android
 - `docs/PIA.md`:隐私影响评估
 - `docs/sensor_client_attribution_report.md`:告警归因报告
 - `docs/sbom.txt`:依赖 SBOM(CycloneDX 1.5)
+- `docs/maintenance.md`:维护与治理、v1.1 路线图
 
 参与贡献请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md);版本历史见 [CHANGELOG.md](CHANGELOG.md)。
 

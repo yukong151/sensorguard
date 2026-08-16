@@ -97,15 +97,15 @@ Phase 5  维护机制(持续)
 - [x] `git push origin master --tags`(Gitee + GitHub 双端 tag 已推送)
 - [x] GitHub Releases:创建 Release 页面(id=371405773,附 CHANGELOG 要点),https://github.com/yukong151/sensorguard/releases/tag/v1.0.0-community
 - [x] README 顶栏加 GitHub badge(版本/许可证/Rust 测试)
-- [ ] 公开仓库可见性确认(GitHub/Gitee 双端已公开)—— 当前 GitHub 为 private,若需公开请在 GitHub 页面切换 visibility
+- [x] 公开仓库可见性确认:GitHub 已切换 **public**(2026-08-17),Gitee 已公开
 
 ## Phase 5 · 维护机制(持续)
 
-- [ ] 建立 issue 模板(bug report / feature request / question)
-- [ ] 建立 PR 模板 + 自动 CI 检查
-- [ ] 维护节奏:每月至少响应 issue,重大安全修复 48h 内响应
-- [ ] 开源治理:谁是最终维护者、合并权限谁有
-- [ ] v1.1 规划公示:云端复核 opt-in 数据集、鸿蒙移植(社区版优先)
+- [x] 建立 issue 模板(bug report / feature request / question)
+- [x] 建立 PR 模板 + 自动 CI 检查
+- [x] 维护节奏与治理文档化:`docs/maintenance.md`(issue 每月响应、重大安全 48h、维护者 yukong151、合并原则、后续发布流程)
+- [x] v1.1 规划公示:`docs/maintenance.md` 路线图(内存优化 150→40-60MB、Isolation Forest 启用评估、云端复核 opt-in、鸿蒙 NAPI 移植、x86 模拟器)
+- [ ] 持续执行:按节奏响应 issue / 处理安全披露 / 更新依赖与 SBOM
 
 ---
 
