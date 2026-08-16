@@ -71,8 +71,8 @@ Phase 5  维护机制(持续)
 - [x] Rust clippy `--all-targets`:修复 9 处(empty_line_after_doc、too_many_arguments、collapsible_match、needless_lifetimes、manual_strip、needless_range_loop、manual_range_contains),全绿
 - [x] 不安全算法扫描:`Cipher.getInstance` 全部 `AES/GCM/NoPadding`(无 ECB/DES/RC4);无 TrustManager/WebView JS
 - [x] 开源合规:NOTICE(算法原创性+参考致谢)已落地,确认无遗漏
-- [ ] MobSF 静态扫描:`mobfscan apk` 出报告,修复 Critical/High 项
-- [ ] 依赖 SBOM:`gen_sbom.py` 输出 `docs/sbom.txt`,检查无已知 CVE 的过期依赖
+- [x] MobSF 静态扫描:`mobsfscan`(1.0.0)扫 APK 零发现;扫源码 6 条全 INFO(ssl_pinning/cert_transparency/safetynet 因零网络不适用;prevent_screenshot/root_detection 非阻塞;tapjacking 非金融可接受),**0 Critical/High/Medium**
+- [x] 依赖 SBOM:`gen_sbom.py` 输出 `docs/sbom.txt`(CycloneDX 1.5,202 组件: Gradle 103 + Cargo 99),shizuku 13.1.5 / flatbuffers 25.12.19 / kotlin 1.9.24,无过期高危依赖
 
 ## Phase 3 · 文档与元数据(0.5 天)
 

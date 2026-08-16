@@ -1,0 +1,1339 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:00000000-0000-0000-0000-000000000001",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-08-17T00:00:00Z",
+    "tools": [
+      {
+        "vendor": "SensorGuard",
+        "name": "gen_sbom.py",
+        "version": "1.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "name": "com.yuexiao12.sensorguard",
+      "version": "1.0.0",
+      "purl": "pkg:maven/com.yuexiao12/sensorguard@1.0.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "aho-corasick",
+      "version": "1.1.5",
+      "purl": "pkg:cargo/aho-corasick@1.1.5"
+    },
+    {
+      "type": "library",
+      "name": "alloca",
+      "version": "0.4.0",
+      "purl": "pkg:cargo/alloca@0.4.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.activity",
+      "name": "activity",
+      "version": "1.7.0",
+      "purl": "pkg:maven/androidx.activity/activity@1.7.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.activity",
+      "name": "activity",
+      "version": "1.5.1",
+      "purl": "pkg:maven/androidx.activity/activity@1.5.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.annotation/annotation@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation",
+      "version": "1.1.0",
+      "purl": "pkg:maven/androidx.annotation/annotation@1.1.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation",
+      "version": "1.6.0",
+      "purl": "pkg:maven/androidx.annotation/annotation@1.6.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation",
+      "version": "1.8.0",
+      "purl": "pkg:maven/androidx.annotation/annotation@1.8.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation",
+      "version": "1.2.0",
+      "purl": "pkg:maven/androidx.annotation/annotation@1.2.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation",
+      "version": "1.3.0",
+      "purl": "pkg:maven/androidx.annotation/annotation@1.3.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation-experimental",
+      "version": "1.4.0",
+      "purl": "pkg:maven/androidx.annotation/annotation-experimental@1.4.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation-experimental",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.annotation/annotation-experimental@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation-experimental",
+      "version": "1.1.0-rc01",
+      "purl": "pkg:maven/androidx.annotation/annotation-experimental@1.1.0-rc01"
+    },
+    {
+      "type": "library",
+      "group": "androidx.annotation",
+      "name": "annotation-jvm",
+      "version": "1.8.0",
+      "purl": "pkg:maven/androidx.annotation/annotation-jvm@1.8.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.appcompat",
+      "name": "appcompat",
+      "version": "1.7.0",
+      "purl": "pkg:maven/androidx.appcompat/appcompat@1.7.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.appcompat",
+      "name": "appcompat-resources",
+      "version": "1.7.0",
+      "purl": "pkg:maven/androidx.appcompat/appcompat-resources@1.7.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.arch.core",
+      "name": "core-common",
+      "version": "2.2.0",
+      "purl": "pkg:maven/androidx.arch.core/core-common@2.2.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.arch.core",
+      "name": "core-common",
+      "version": "2.1.0",
+      "purl": "pkg:maven/androidx.arch.core/core-common@2.1.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.arch.core",
+      "name": "core-runtime",
+      "version": "2.2.0",
+      "purl": "pkg:maven/androidx.arch.core/core-runtime@2.2.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.collection",
+      "name": "collection",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.collection/collection@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.collection",
+      "name": "collection",
+      "version": "1.1.0",
+      "purl": "pkg:maven/androidx.collection/collection@1.1.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.concurrent",
+      "name": "concurrent-futures",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.concurrent/concurrent-futures@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.concurrent",
+      "name": "concurrent-futures",
+      "version": "1.1.0",
+      "purl": "pkg:maven/androidx.concurrent/concurrent-futures@1.1.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.13.1",
+      "purl": "pkg:maven/androidx.core/core@1.13.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.8.0",
+      "purl": "pkg:maven/androidx.core/core@1.8.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.6.0",
+      "purl": "pkg:maven/androidx.core/core@1.6.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.1.0",
+      "purl": "pkg:maven/androidx.core/core@1.1.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.13.0",
+      "purl": "pkg:maven/androidx.core/core@1.13.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.core/core@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core",
+      "version": "1.3.0",
+      "purl": "pkg:maven/androidx.core/core@1.3.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core-ktx",
+      "version": "1.13.1",
+      "purl": "pkg:maven/androidx.core/core-ktx@1.13.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core-ktx",
+      "version": "1.2.0",
+      "purl": "pkg:maven/androidx.core/core-ktx@1.2.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.core",
+      "name": "core-ktx",
+      "version": "1.13.0",
+      "purl": "pkg:maven/androidx.core/core-ktx@1.13.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.cursoradapter",
+      "name": "cursoradapter",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.cursoradapter/cursoradapter@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.customview",
+      "name": "customview",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.customview/customview@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.databinding",
+      "name": "viewbinding",
+      "version": "8.5.2",
+      "purl": "pkg:maven/androidx.databinding/viewbinding@8.5.2"
+    },
+    {
+      "type": "library",
+      "group": "androidx.drawerlayout",
+      "name": "drawerlayout",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.drawerlayout/drawerlayout@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.emoji2",
+      "name": "emoji2",
+      "version": "1.3.0",
+      "purl": "pkg:maven/androidx.emoji2/emoji2@1.3.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.emoji2",
+      "name": "emoji2-views-helper",
+      "version": "1.3.0",
+      "purl": "pkg:maven/androidx.emoji2/emoji2-views-helper@1.3.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.emoji2",
+      "name": "emoji2-views-helper",
+      "version": "1.2.0",
+      "purl": "pkg:maven/androidx.emoji2/emoji2-views-helper@1.2.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.fragment",
+      "name": "fragment",
+      "version": "1.5.4",
+      "purl": "pkg:maven/androidx.fragment/fragment@1.5.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.interpolator",
+      "name": "interpolator",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.interpolator/interpolator@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-common",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-common@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-common",
+      "version": "2.6.1",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-common@2.6.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-common-jvm",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-common-jvm@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata",
+      "version": "2.0.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata@2.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata-core",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata-core",
+      "version": "2.5.1",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core@2.5.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-livedata-core-ktx",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-livedata-core-ktx@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-process",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-process@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-process",
+      "version": "2.4.1",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-process@2.4.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-runtime",
+      "version": "2.6.2",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.6.2"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-runtime",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-runtime",
+      "version": "2.6.1",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-runtime@2.6.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-runtime-android",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-runtime-android@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-service",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-service@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel",
+      "version": "2.6.1",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.6.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel",
+      "version": "2.5.1",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.5.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel",
+      "version": "2.0.0",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel@2.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel-android",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-android@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel-savedstate",
+      "version": "2.8.4",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.8.4"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel-savedstate",
+      "version": "2.6.1",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.6.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.lifecycle",
+      "name": "lifecycle-viewmodel-savedstate",
+      "version": "2.5.1",
+      "purl": "pkg:maven/androidx.lifecycle/lifecycle-viewmodel-savedstate@2.5.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.loader",
+      "name": "loader",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.loader/loader@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.profileinstaller",
+      "name": "profileinstaller",
+      "version": "1.3.1",
+      "purl": "pkg:maven/androidx.profileinstaller/profileinstaller@1.3.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.profileinstaller",
+      "name": "profileinstaller",
+      "version": "1.3.0",
+      "purl": "pkg:maven/androidx.profileinstaller/profileinstaller@1.3.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.resourceinspection",
+      "name": "resourceinspection-annotation",
+      "version": "1.0.1",
+      "purl": "pkg:maven/androidx.resourceinspection/resourceinspection-annotation@1.0.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.room",
+      "name": "room-common",
+      "version": "2.6.1",
+      "purl": "pkg:maven/androidx.room/room-common@2.6.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.room",
+      "name": "room-ktx",
+      "version": "2.6.1",
+      "purl": "pkg:maven/androidx.room/room-ktx@2.6.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.room",
+      "name": "room-runtime",
+      "version": "2.6.1",
+      "purl": "pkg:maven/androidx.room/room-runtime@2.6.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.savedstate",
+      "name": "savedstate",
+      "version": "1.2.1",
+      "purl": "pkg:maven/androidx.savedstate/savedstate@1.2.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.savedstate",
+      "name": "savedstate",
+      "version": "1.2.0",
+      "purl": "pkg:maven/androidx.savedstate/savedstate@1.2.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.sqlite",
+      "name": "sqlite",
+      "version": "2.4.0",
+      "purl": "pkg:maven/androidx.sqlite/sqlite@2.4.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.sqlite",
+      "name": "sqlite-framework",
+      "version": "2.4.0",
+      "purl": "pkg:maven/androidx.sqlite/sqlite-framework@2.4.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.startup",
+      "name": "startup-runtime",
+      "version": "1.1.1",
+      "purl": "pkg:maven/androidx.startup/startup-runtime@1.1.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.startup",
+      "name": "startup-runtime",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.startup/startup-runtime@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.tracing",
+      "name": "tracing",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.tracing/tracing@1.0.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.vectordrawable",
+      "name": "vectordrawable",
+      "version": "1.1.0",
+      "purl": "pkg:maven/androidx.vectordrawable/vectordrawable@1.1.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.vectordrawable",
+      "name": "vectordrawable-animated",
+      "version": "1.1.0",
+      "purl": "pkg:maven/androidx.vectordrawable/vectordrawable-animated@1.1.0"
+    },
+    {
+      "type": "library",
+      "group": "androidx.versionedparcelable",
+      "name": "versionedparcelable",
+      "version": "1.1.1",
+      "purl": "pkg:maven/androidx.versionedparcelable/versionedparcelable@1.1.1"
+    },
+    {
+      "type": "library",
+      "group": "androidx.viewpager",
+      "name": "viewpager",
+      "version": "1.0.0",
+      "purl": "pkg:maven/androidx.viewpager/viewpager@1.0.0"
+    },
+    {
+      "type": "library",
+      "name": "anes",
+      "version": "0.1.6",
+      "purl": "pkg:cargo/anes@0.1.6"
+    },
+    {
+      "type": "library",
+      "name": "anstyle",
+      "version": "1.0.14",
+      "purl": "pkg:cargo/anstyle@1.0.14"
+    },
+    {
+      "type": "library",
+      "name": "autocfg",
+      "version": "1.5.1",
+      "purl": "pkg:cargo/autocfg@1.5.1"
+    },
+    {
+      "type": "library",
+      "name": "base64ct",
+      "version": "1.8.3",
+      "purl": "pkg:cargo/base64ct@1.8.3"
+    },
+    {
+      "type": "library",
+      "name": "bitflags",
+      "version": "2.13.1",
+      "purl": "pkg:cargo/bitflags@2.13.1"
+    },
+    {
+      "type": "library",
+      "name": "block-buffer",
+      "version": "0.10.4",
+      "purl": "pkg:cargo/block-buffer@0.10.4"
+    },
+    {
+      "type": "library",
+      "name": "bumpalo",
+      "version": "3.20.3",
+      "purl": "pkg:cargo/bumpalo@3.20.3"
+    },
+    {
+      "type": "library",
+      "name": "cast",
+      "version": "0.3.0",
+      "purl": "pkg:cargo/cast@0.3.0"
+    },
+    {
+      "type": "library",
+      "name": "cc",
+      "version": "1.4.2",
+      "purl": "pkg:cargo/cc@1.4.2"
+    },
+    {
+      "type": "library",
+      "name": "cfg-if",
+      "version": "1.0.4",
+      "purl": "pkg:cargo/cfg-if@1.0.4"
+    },
+    {
+      "type": "library",
+      "name": "ciborium",
+      "version": "0.2.2",
+      "purl": "pkg:cargo/ciborium@0.2.2"
+    },
+    {
+      "type": "library",
+      "name": "ciborium-io",
+      "version": "0.2.2",
+      "purl": "pkg:cargo/ciborium-io@0.2.2"
+    },
+    {
+      "type": "library",
+      "name": "ciborium-ll",
+      "version": "0.2.2",
+      "purl": "pkg:cargo/ciborium-ll@0.2.2"
+    },
+    {
+      "type": "library",
+      "name": "clap",
+      "version": "4.6.6",
+      "purl": "pkg:cargo/clap@4.6.6"
+    },
+    {
+      "type": "library",
+      "name": "clap_builder",
+      "version": "4.6.6",
+      "purl": "pkg:cargo/clap_builder@4.6.6"
+    },
+    {
+      "type": "library",
+      "name": "clap_lex",
+      "version": "1.1.0",
+      "purl": "pkg:cargo/clap_lex@1.1.0"
+    },
+    {
+      "type": "library",
+      "group": "com.google.guava",
+      "name": "listenablefuture",
+      "version": "1.0",
+      "purl": "pkg:maven/com.google.guava/listenablefuture@1.0"
+    },
+    {
+      "type": "library",
+      "name": "const-oid",
+      "version": "0.9.6",
+      "purl": "pkg:cargo/const-oid@0.9.6"
+    },
+    {
+      "type": "library",
+      "name": "cpufeatures",
+      "version": "0.2.17",
+      "purl": "pkg:cargo/cpufeatures@0.2.17"
+    },
+    {
+      "type": "library",
+      "name": "criterion",
+      "version": "0.8.2",
+      "purl": "pkg:cargo/criterion@0.8.2"
+    },
+    {
+      "type": "library",
+      "name": "criterion-plot",
+      "version": "0.8.2",
+      "purl": "pkg:cargo/criterion-plot@0.8.2"
+    },
+    {
+      "type": "library",
+      "name": "crossbeam-deque",
+      "version": "0.8.7",
+      "purl": "pkg:cargo/crossbeam-deque@0.8.7"
+    },
+    {
+      "type": "library",
+      "name": "crossbeam-epoch",
+      "version": "0.9.20",
+      "purl": "pkg:cargo/crossbeam-epoch@0.9.20"
+    },
+    {
+      "type": "library",
+      "name": "crossbeam-utils",
+      "version": "0.8.22",
+      "purl": "pkg:cargo/crossbeam-utils@0.8.22"
+    },
+    {
+      "type": "library",
+      "name": "crunchy",
+      "version": "0.2.4",
+      "purl": "pkg:cargo/crunchy@0.2.4"
+    },
+    {
+      "type": "library",
+      "name": "crypto-common",
+      "version": "0.1.7",
+      "purl": "pkg:cargo/crypto-common@0.1.7"
+    },
+    {
+      "type": "library",
+      "name": "curve25519-dalek",
+      "version": "4.1.3",
+      "purl": "pkg:cargo/curve25519-dalek@4.1.3"
+    },
+    {
+      "type": "library",
+      "name": "curve25519-dalek-derive",
+      "version": "0.1.1",
+      "purl": "pkg:cargo/curve25519-dalek-derive@0.1.1"
+    },
+    {
+      "type": "library",
+      "name": "der",
+      "version": "0.7.10",
+      "purl": "pkg:cargo/der@0.7.10"
+    },
+    {
+      "type": "library",
+      "group": "dev.rikka.shizuku",
+      "name": "aidl",
+      "version": "13.1.5",
+      "purl": "pkg:maven/dev.rikka.shizuku/aidl@13.1.5"
+    },
+    {
+      "type": "library",
+      "group": "dev.rikka.shizuku",
+      "name": "api",
+      "version": "13.1.5",
+      "purl": "pkg:maven/dev.rikka.shizuku/api@13.1.5"
+    },
+    {
+      "type": "library",
+      "group": "dev.rikka.shizuku",
+      "name": "provider",
+      "version": "13.1.5",
+      "purl": "pkg:maven/dev.rikka.shizuku/provider@13.1.5"
+    },
+    {
+      "type": "library",
+      "group": "dev.rikka.shizuku",
+      "name": "shared",
+      "version": "13.1.5",
+      "purl": "pkg:maven/dev.rikka.shizuku/shared@13.1.5"
+    },
+    {
+      "type": "library",
+      "name": "digest",
+      "version": "0.10.7",
+      "purl": "pkg:cargo/digest@0.10.7"
+    },
+    {
+      "type": "library",
+      "name": "ed25519",
+      "version": "2.2.3",
+      "purl": "pkg:cargo/ed25519@2.2.3"
+    },
+    {
+      "type": "library",
+      "name": "ed25519-dalek",
+      "version": "2.2.0",
+      "purl": "pkg:cargo/ed25519-dalek@2.2.0"
+    },
+    {
+      "type": "library",
+      "name": "either",
+      "version": "1.17.0",
+      "purl": "pkg:cargo/either@1.17.0"
+    },
+    {
+      "type": "library",
+      "name": "fiat-crypto",
+      "version": "0.2.9",
+      "purl": "pkg:cargo/fiat-crypto@0.2.9"
+    },
+    {
+      "type": "library",
+      "name": "find-msvc-tools",
+      "version": "0.1.10",
+      "purl": "pkg:cargo/find-msvc-tools@0.1.10"
+    },
+    {
+      "type": "library",
+      "name": "flatbuffers",
+      "version": "25.12.19",
+      "purl": "pkg:cargo/flatbuffers@25.12.19"
+    },
+    {
+      "type": "library",
+      "name": "futures-core",
+      "version": "0.3.33",
+      "purl": "pkg:cargo/futures-core@0.3.33"
+    },
+    {
+      "type": "library",
+      "name": "futures-task",
+      "version": "0.3.33",
+      "purl": "pkg:cargo/futures-task@0.3.33"
+    },
+    {
+      "type": "library",
+      "name": "futures-util",
+      "version": "0.3.33",
+      "purl": "pkg:cargo/futures-util@0.3.33"
+    },
+    {
+      "type": "library",
+      "name": "generic-array",
+      "version": "0.14.7",
+      "purl": "pkg:cargo/generic-array@0.14.7"
+    },
+    {
+      "type": "library",
+      "name": "half",
+      "version": "2.7.1",
+      "purl": "pkg:cargo/half@2.7.1"
+    },
+    {
+      "type": "library",
+      "name": "itertools",
+      "version": "0.13.0",
+      "purl": "pkg:cargo/itertools@0.13.0"
+    },
+    {
+      "type": "library",
+      "name": "itoa",
+      "version": "1.0.18",
+      "purl": "pkg:cargo/itoa@1.0.18"
+    },
+    {
+      "type": "library",
+      "name": "js-sys",
+      "version": "0.3.104",
+      "purl": "pkg:cargo/js-sys@0.3.104"
+    },
+    {
+      "type": "library",
+      "name": "libc",
+      "version": "0.2.189",
+      "purl": "pkg:cargo/libc@0.2.189"
+    },
+    {
+      "type": "library",
+      "name": "memchr",
+      "version": "2.8.3",
+      "purl": "pkg:cargo/memchr@2.8.3"
+    },
+    {
+      "type": "library",
+      "name": "num-traits",
+      "version": "0.2.19",
+      "purl": "pkg:cargo/num-traits@0.2.19"
+    },
+    {
+      "type": "library",
+      "name": "once_cell",
+      "version": "1.21.4",
+      "purl": "pkg:cargo/once_cell@1.21.4"
+    },
+    {
+      "type": "library",
+      "name": "oorandom",
+      "version": "11.1.5",
+      "purl": "pkg:cargo/oorandom@11.1.5"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "1.7.10",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.7.10"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "1.9.24",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.9.24"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "1.8.22",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.8.22"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "1.8.10",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.8.10"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib",
+      "version": "1.6.21",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@1.6.21"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-common",
+      "version": "1.9.24",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.9.24"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-common",
+      "version": "1.8.20",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-common@1.8.20"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-jdk7",
+      "version": "1.8.0",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk7@1.8.0"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-jdk7",
+      "version": "1.8.22",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk7@1.8.22"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-jdk8",
+      "version": "1.8.0",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.8.0"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-jdk8",
+      "version": "1.8.20",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.8.20"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlin",
+      "name": "kotlin-stdlib-jdk8",
+      "version": "1.8.22",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-stdlib-jdk8@1.8.22"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlinx",
+      "name": "kotlinx-coroutines-android",
+      "version": "1.7.3",
+      "purl": "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-android@1.7.3"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlinx",
+      "name": "kotlinx-coroutines-android",
+      "version": "1.7.1",
+      "purl": "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-android@1.7.1"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlinx",
+      "name": "kotlinx-coroutines-bom",
+      "version": "1.7.3",
+      "purl": "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-bom@1.7.3"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlinx",
+      "name": "kotlinx-coroutines-core",
+      "version": "1.7.3",
+      "purl": "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-core@1.7.3"
+    },
+    {
+      "type": "library",
+      "group": "org.jetbrains.kotlinx",
+      "name": "kotlinx-coroutines-core-jvm",
+      "version": "1.7.3",
+      "purl": "pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm@1.7.3"
+    },
+    {
+      "type": "library",
+      "name": "page_size",
+      "version": "0.6.0",
+      "purl": "pkg:cargo/page_size@0.6.0"
+    },
+    {
+      "type": "library",
+      "name": "pin-project-lite",
+      "version": "0.2.17",
+      "purl": "pkg:cargo/pin-project-lite@0.2.17"
+    },
+    {
+      "type": "library",
+      "name": "pkcs8",
+      "version": "0.10.2",
+      "purl": "pkg:cargo/pkcs8@0.10.2"
+    },
+    {
+      "type": "library",
+      "name": "plotters",
+      "version": "0.3.7",
+      "purl": "pkg:cargo/plotters@0.3.7"
+    },
+    {
+      "type": "library",
+      "name": "plotters-backend",
+      "version": "0.3.7",
+      "purl": "pkg:cargo/plotters-backend@0.3.7"
+    },
+    {
+      "type": "library",
+      "name": "plotters-svg",
+      "version": "0.3.7",
+      "purl": "pkg:cargo/plotters-svg@0.3.7"
+    },
+    {
+      "type": "library",
+      "name": "proc-macro2",
+      "version": "1.0.107",
+      "purl": "pkg:cargo/proc-macro2@1.0.107"
+    },
+    {
+      "type": "library",
+      "name": "quote",
+      "version": "1.0.47",
+      "purl": "pkg:cargo/quote@1.0.47"
+    },
+    {
+      "type": "library",
+      "name": "rayon",
+      "version": "1.12.0",
+      "purl": "pkg:cargo/rayon@1.12.0"
+    },
+    {
+      "type": "library",
+      "name": "rayon-core",
+      "version": "1.13.0",
+      "purl": "pkg:cargo/rayon-core@1.13.0"
+    },
+    {
+      "type": "library",
+      "name": "regex",
+      "version": "1.13.1",
+      "purl": "pkg:cargo/regex@1.13.1"
+    },
+    {
+      "type": "library",
+      "name": "regex-automata",
+      "version": "0.4.18",
+      "purl": "pkg:cargo/regex-automata@0.4.18"
+    },
+    {
+      "type": "library",
+      "name": "regex-syntax",
+      "version": "0.8.11",
+      "purl": "pkg:cargo/regex-syntax@0.8.11"
+    },
+    {
+      "type": "library",
+      "name": "rustc_version",
+      "version": "0.4.1",
+      "purl": "pkg:cargo/rustc_version@0.4.1"
+    },
+    {
+      "type": "library",
+      "name": "rustversion",
+      "version": "1.0.23",
+      "purl": "pkg:cargo/rustversion@1.0.23"
+    },
+    {
+      "type": "library",
+      "name": "same-file",
+      "version": "1.0.6",
+      "purl": "pkg:cargo/same-file@1.0.6"
+    },
+    {
+      "type": "library",
+      "name": "semver",
+      "version": "1.0.28",
+      "purl": "pkg:cargo/semver@1.0.28"
+    },
+    {
+      "type": "library",
+      "name": "serde",
+      "version": "1.0.229",
+      "purl": "pkg:cargo/serde@1.0.229"
+    },
+    {
+      "type": "library",
+      "name": "serde_core",
+      "version": "1.0.229",
+      "purl": "pkg:cargo/serde_core@1.0.229"
+    },
+    {
+      "type": "library",
+      "name": "serde_derive",
+      "version": "1.0.229",
+      "purl": "pkg:cargo/serde_derive@1.0.229"
+    },
+    {
+      "type": "library",
+      "name": "serde_json",
+      "version": "1.0.151",
+      "purl": "pkg:cargo/serde_json@1.0.151"
+    },
+    {
+      "type": "library",
+      "name": "sha2",
+      "version": "0.10.9",
+      "purl": "pkg:cargo/sha2@0.10.9"
+    },
+    {
+      "type": "library",
+      "name": "shlex",
+      "version": "2.0.1",
+      "purl": "pkg:cargo/shlex@2.0.1"
+    },
+    {
+      "type": "library",
+      "name": "signature",
+      "version": "2.2.0",
+      "purl": "pkg:cargo/signature@2.2.0"
+    },
+    {
+      "type": "library",
+      "name": "slab",
+      "version": "0.4.12",
+      "purl": "pkg:cargo/slab@0.4.12"
+    },
+    {
+      "type": "library",
+      "name": "spki",
+      "version": "0.7.3",
+      "purl": "pkg:cargo/spki@0.7.3"
+    },
+    {
+      "type": "library",
+      "name": "subtle",
+      "version": "2.6.1",
+      "purl": "pkg:cargo/subtle@2.6.1"
+    },
+    {
+      "type": "library",
+      "name": "syn",
+      "version": "2.0.119",
+      "purl": "pkg:cargo/syn@2.0.119"
+    },
+    {
+      "type": "library",
+      "name": "syn",
+      "version": "3.0.3",
+      "purl": "pkg:cargo/syn@3.0.3"
+    },
+    {
+      "type": "library",
+      "name": "tinytemplate",
+      "version": "1.2.1",
+      "purl": "pkg:cargo/tinytemplate@1.2.1"
+    },
+    {
+      "type": "library",
+      "name": "typenum",
+      "version": "1.20.1",
+      "purl": "pkg:cargo/typenum@1.20.1"
+    },
+    {
+      "type": "library",
+      "name": "unicode-ident",
+      "version": "1.0.24",
+      "purl": "pkg:cargo/unicode-ident@1.0.24"
+    },
+    {
+      "type": "library",
+      "name": "version_check",
+      "version": "0.9.5",
+      "purl": "pkg:cargo/version_check@0.9.5"
+    },
+    {
+      "type": "library",
+      "name": "walkdir",
+      "version": "2.5.0",
+      "purl": "pkg:cargo/walkdir@2.5.0"
+    },
+    {
+      "type": "library",
+      "name": "wasm-bindgen",
+      "version": "0.2.127",
+      "purl": "pkg:cargo/wasm-bindgen@0.2.127"
+    },
+    {
+      "type": "library",
+      "name": "wasm-bindgen-macro",
+      "version": "0.2.127",
+      "purl": "pkg:cargo/wasm-bindgen-macro@0.2.127"
+    },
+    {
+      "type": "library",
+      "name": "wasm-bindgen-macro-support",
+      "version": "0.2.127",
+      "purl": "pkg:cargo/wasm-bindgen-macro-support@0.2.127"
+    },
+    {
+      "type": "library",
+      "name": "wasm-bindgen-shared",
+      "version": "0.2.127",
+      "purl": "pkg:cargo/wasm-bindgen-shared@0.2.127"
+    },
+    {
+      "type": "library",
+      "name": "web-sys",
+      "version": "0.3.104",
+      "purl": "pkg:cargo/web-sys@0.3.104"
+    },
+    {
+      "type": "library",
+      "name": "winapi",
+      "version": "0.3.9",
+      "purl": "pkg:cargo/winapi@0.3.9"
+    },
+    {
+      "type": "library",
+      "name": "winapi-i686-pc-windows-gnu",
+      "version": "0.4.0",
+      "purl": "pkg:cargo/winapi-i686-pc-windows-gnu@0.4.0"
+    },
+    {
+      "type": "library",
+      "name": "winapi-util",
+      "version": "0.1.11",
+      "purl": "pkg:cargo/winapi-util@0.1.11"
+    },
+    {
+      "type": "library",
+      "name": "winapi-x86_64-pc-windows-gnu",
+      "version": "0.4.0",
+      "purl": "pkg:cargo/winapi-x86_64-pc-windows-gnu@0.4.0"
+    },
+    {
+      "type": "library",
+      "name": "windows-link",
+      "version": "0.2.1",
+      "purl": "pkg:cargo/windows-link@0.2.1"
+    },
+    {
+      "type": "library",
+      "name": "windows-sys",
+      "version": "0.61.2",
+      "purl": "pkg:cargo/windows-sys@0.61.2"
+    },
+    {
+      "type": "library",
+      "name": "zerocopy",
+      "version": "0.8.56",
+      "purl": "pkg:cargo/zerocopy@0.8.56"
+    },
+    {
+      "type": "library",
+      "name": "zerocopy-derive",
+      "version": "0.8.56",
+      "purl": "pkg:cargo/zerocopy-derive@0.8.56"
+    },
+    {
+      "type": "library",
+      "name": "zeroize",
+      "version": "1.9.0",
+      "purl": "pkg:cargo/zeroize@1.9.0"
+    },
+    {
+      "type": "library",
+      "name": "zmij",
+      "version": "1.0.23",
+      "purl": "pkg:cargo/zmij@1.0.23"
+    }
+  ]
+}

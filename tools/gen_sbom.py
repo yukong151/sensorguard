@@ -12,7 +12,7 @@ import sys
 from datetime import date
 
 GRADLE_INPUT = "build/sbom/gradle_deps.txt"
-CARGO_INPUT = "build/sbom/cargo_deps.json"
+CARGO_INPUT = "build/sbom/cargo_meta.json"
 OUTPUT = "build/sbom/sensorguard-sbom.json"
 
 COMPONENT_TYPE_APP = "application"
@@ -45,18 +45,17 @@ def parse_gradle_deps(path: str) -> list[dict]:
 
 
 def parse_cargo_deps(path: str) -> list[dict]:
-    """解析 `cargo tree --format json` 输出(NodeJson 数组,每节点含 name/version)。"""
+    """解析 `cargo metadata --format-version 1` 输出(packages 数组,含 name/version)。"""
     comps = []
     try:
-        with open(path, encoding="utf-8-sig") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except Exception:
         return comps
-    if not isinstance(data, list):
-        return comps
-    for node in data:
-        name = node.get("name", "")
-        version = node.get("version", "")
+    pkgs = data.get("packages", []) if isinstance(data, dict) else []
+    for pkg in pkgs:
+        name = pkg.get("name", "")
+        version = pkg.get("version", "")
         if name == "sensorguard":  # 本项目自身
             continue
         comps.append({
