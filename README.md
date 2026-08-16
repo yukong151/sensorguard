@@ -69,7 +69,6 @@ cd core-rust && cargo build --release --target aarch64-linux-android
 - `docs/store_listing.md`:商店提审清单
 - `docs/SHIZUKU_WIRELESS_SETUP.md`:Shizuku 无线激活步骤
 - `docs/PIA.md`:隐私影响评估
-- `docs/sensor_client_attribution_report.md`:告警归因报告
 - `docs/sbom.txt`:依赖 SBOM(CycloneDX 1.5)
 - `docs/maintenance.md`:维护与治理、v1.1 路线图
 

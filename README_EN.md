@@ -69,7 +69,6 @@ The full design document (threat model, algorithms, performance budget, complian
 - `docs/store_listing.md`: store listing checklist
 - `docs/SHIZUKU_WIRELESS_SETUP.md`: Shizuku wireless activation steps
 - `docs/PIA.md`: privacy impact assessment
-- `docs/sensor_client_attribution_report.md`: alert attribution report
 - `docs/sbom.txt`: dependency SBOM (CycloneDX 1.5)
 - `docs/maintenance.md`: maintenance & governance, v1.1 roadmap
 
