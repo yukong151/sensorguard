@@ -360,6 +360,8 @@ fn parse_predicate(obj: &str) -> Result<Predicate, &'static str> {
         "power_state_equals",
         "intent_hint_equals",
         "system_proxy_equals",
+        "uid_not_in",
+        "uid_gte",
         "decl_purpose_not_in",
         "decl_purpose_in",
         "ks_d_gt",
@@ -395,6 +397,8 @@ fn parse_predicate_value(key: &str, v: &str) -> Result<Predicate, &'static str> 
         "power_state_equals" => Ok(Predicate::PowerStateEquals(bool_scalar(v)?)),
         "intent_hint_equals" => Ok(Predicate::IntentHintEquals(bool_scalar(v)?)),
         "system_proxy_equals" => Ok(Predicate::SystemProxyEquals(bool_scalar(v)?)),
+        "uid_not_in" => Ok(Predicate::UidNotIn(i32_vec(v)?)),
+        "uid_gte" => Ok(Predicate::UidGte(take_scalar(v)?.parse::<u32>().map_err(|_| "bad number")?)),
         "decl_purpose_not_in" => Ok(Predicate::DeclPurposeNotIn(u8_vec(v)?)),
         "decl_purpose_in" => Ok(Predicate::DeclPurposeIn(u8_vec(v)?)),
         "ks_d_gt" => Ok(Predicate::KsDGt(take_scalar(v)?.parse::<f32>().map_err(|_| "bad float")?)),
@@ -432,6 +436,14 @@ fn u8_vec(v: &str) -> Result<Vec<u8>, &'static str> {
     split_array_elements(arr)?
         .into_iter()
         .map(|e| e.parse::<u8>().map_err(|_| "bad number"))
+        .collect()
+}
+
+fn i32_vec(v: &str) -> Result<Vec<i32>, &'static str> {
+    let arr = array_from_value(v)?;
+    split_array_elements(arr)?
+        .into_iter()
+        .map(|e| e.parse::<i32>().map_err(|_| "bad number"))
         .collect()
 }
 
@@ -562,6 +574,8 @@ mod tests {
             Predicate::PowerStateEquals(v) => ctx.power_state = *v,
             Predicate::IntentHintEquals(v) => ctx.intent_hint = *v,
             Predicate::SystemProxyEquals(v) => ctx.system_proxy = *v,
+            Predicate::UidNotIn(list) => ctx.uid = (list.last().copied().unwrap_or(0) + 1).max(10000),
+            Predicate::UidGte(threshold) => ctx.uid = *threshold as i32,
             Predicate::DeclPurposeNotIn(list) => {
                 ctx.decl_purpose = (0u8..=6).find(|c| !list.contains(c)).unwrap_or(7);
             }
@@ -598,6 +612,8 @@ mod tests {
             Predicate::PowerStateEquals(v) => ctx.power_state = !v,
             Predicate::IntentHintEquals(v) => ctx.intent_hint = !v,
             Predicate::SystemProxyEquals(v) => ctx.system_proxy = !v,
+            Predicate::UidNotIn(list) => ctx.uid = list.first().copied().unwrap_or(0),
+            Predicate::UidGte(_) => ctx.uid = 0,
             Predicate::DeclPurposeNotIn(list) => ctx.decl_purpose = list[0],
             Predicate::DeclPurposeIn(_) => ctx.decl_purpose = 200,
             Predicate::KsDGt(_) => ctx.ks_d = Some(0.0),

@@ -63,6 +63,8 @@ pub enum Predicate {
     PowerStateEquals(bool),
     IntentHintEquals(bool),
     SystemProxyEquals(bool),
+    UidNotIn(Vec<i32>),
+    UidGte(u32),
     DeclPurposeNotIn(Vec<u8>),
     DeclPurposeIn(Vec<u8>),
     // 跨层谓词,依赖 L3 输出,只在 Batch B 阶段可用
@@ -146,6 +148,8 @@ fn eval_predicate(p: &Predicate, ctx: &EvalContext) -> bool {
         Predicate::PowerStateEquals(v) => ctx.power_state == *v,
         Predicate::IntentHintEquals(v) => ctx.intent_hint == *v,
         Predicate::SystemProxyEquals(v) => ctx.system_proxy == *v,
+        Predicate::UidNotIn(list) => !list.contains(&ctx.uid),
+        Predicate::UidGte(threshold) => (ctx.uid as u32) >= *threshold,
         Predicate::DeclPurposeNotIn(list) => !list.contains(&ctx.decl_purpose),
         Predicate::DeclPurposeIn(list) => list.contains(&ctx.decl_purpose),
         Predicate::KsDGt(t) => ctx.ks_d.map(|v| v > *t).unwrap_or(false),
@@ -569,13 +573,13 @@ pub fn builtin_rules() -> Vec<Rule> {
             vec![
                 // P0-1 修复:原 always-match 对 ACCEL/GYRO 无条件触发,导致系统组件
                 // (FaceDownDetector uid=1000 / GMS uid=10213 / SystemUI) 被误报为侧信道。
-                // 加 system_proxy_equals:false,由 Kotlin 侧 CtxProbe 据 uid/包名标记系统组件,
-                // 系统组件不再触发此 OBSERVE 规则(普通 App 仍正常观察)。
+                // 加 UidGte(10000) 排除所有平台系统 uid(1000-9999);
+                // 加 UidNotIn([10213]) 排除 GMS(uid=10213,虽在 app 范围但由平台签名)。
+                // 普通 App(uid >= 10000 且非 GMS)仍正常观察。
                 Predicate::OpIn(vec![ops::ACCEL, ops::GYRO]),
+                Predicate::UidGte(10000),
+                Predicate::UidNotIn(vec![10213]),
                 Predicate::SystemProxyEquals(false),
-                // P0-2 修复:健身类(FITNESS=2)与导航类(NAVIGATION=3)App 合法使用
-                // ACCEL/GYRO(计步器、航位推算等),其 declared permissions 已声明对应传感器。
-                // 排除这两类用途,消除对合法运动/导航 App 的误报。
                 Predicate::DeclPurposeNotIn(vec![2, 3]),
             ],
             // count_p99_multiple 由 Fast Tick 触发条件在引擎外表达(§5.3);
@@ -895,8 +899,57 @@ mod tests {
         assert!(engine
             .eval_batch_b(&ctx, 0, t0 + 100 * 1_000_000_000)
             .is_none());
-        assert!(engine
-            .eval_batch_b(&ctx, 0, t0 + 160 * 1_000_000_000)
-            .is_some());
+         assert!(engine
+             .eval_batch_b(&ctx, 0, t0 + 160 * 1_000_000_000)
+             .is_some());
+     }
+
+    #[test]
+    fn r112_system_uid_whitelist_blocks_system_and_gms() {
+        let engine = RuleEngine::new(vec![builtin_rules()
+            .into_iter()
+            .find(|r| r.id == 112)
+            .expect("r112")]);
+        let t0 = 1_000_000_000i64;
+
+        // 正例:普通 App(uid=10000+) + ACCEL + decl_purpose=OTHER(非 GAME/FITNESS) → 命中
+        let mut ctx = base_ctx();
+        ctx.op = ops::ACCEL;
+        ctx.uid = 10000;
+        ctx.decl_purpose = purposes::OTHER;
+        ctx.system_proxy = false;
+        assert!(
+            engine.eval_batch_b(&ctx, 0, t0).is_some(),
+            "普通 App 应触发 R112 OBSERVE"
+        );
+
+        // 反例 1:系统 uid=1000(FaceDownDetector) → UidGte(10000) 失败,不命中
+        ctx.uid = 1000;
+        assert!(
+            engine.eval_batch_b(&ctx, 0, t0 + 100 * 1_000_000_000).is_none(),
+            "系统 uid=1000 不应触发 R112"
+        );
+
+        // 反例 2:GMS uid=10213 → UidNotIn([10213]) 失败,不命中
+        ctx.uid = 10213;
+        assert!(
+            engine.eval_batch_b(&ctx, 0, t0 + 200 * 1_000_000_000).is_none(),
+            "GMS uid=10213 不应触发 R112"
+        );
+
+        // 反例 3:其他平台 uid=1001(radio) → UidGte(10000) 失败
+        ctx.uid = 1001;
+        assert!(
+            engine.eval_batch_b(&ctx, 0, t0 + 300 * 1_000_000_000).is_none(),
+            "平台 uid=1001 不应触发 R112"
+        );
+
+        // 反例 4:GMS 但用 GYRO(op=11)→ 同样被 uid_not_in 挡住
+        ctx.uid = 10213;
+        ctx.op = ops::GYRO;
+        assert!(
+            engine.eval_batch_b(&ctx, 0, t0 + 400 * 1_000_000_000).is_none(),
+            "GMS + GYRO 不应触发 R112"
+        );
     }
 }

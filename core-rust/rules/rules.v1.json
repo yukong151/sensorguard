@@ -173,9 +173,11 @@
     "debounce": { "window_s": 300, "min_hits": 1, "cool_down_s": 900 },
     "predicates": [
       { "op_in": [10, 11] },
+      { "uid_gte": 10000 },
+      { "uid_not_in": [10213] },
       { "system_proxy_equals": false },
       { "decl_purpose_not_in": [2, 3] }
-    ]
+    ],
   },
   {
     "id": 113,
