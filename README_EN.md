@@ -55,6 +55,8 @@ Requirements: Android SDK, Android Studio JBR (Java 17), Rust nightly + android 
 
 Community release APK (properly signed) is available from [GitHub Releases](https://github.com/yukong151/sensorguard/releases). Sideloading supported (enable "Install unknown apps" on device).
 
+Signing & key management: see [docs/signing.md](docs/signing.md).
+
 ## Exact Attribution via Shizuku
 
 Attributing sensor/camera events to exact app packages requires Shizuku. Activation and authorization steps: [docs/SHIZUKU_WIRELESS_SETUP.md](docs/SHIZUKU_WIRELESS_SETUP.md) (wireless debugging method; reactivation needed after every reboot).
