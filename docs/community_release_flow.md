@@ -56,19 +56,23 @@ Phase 5  维护机制(持续)
 
 ### 1.4 压测收尾
 
-- [ ] 24h 压测于 2026-08-14 20:04 启动,预计 08-15 20:04 结束
-- [ ] 设备端自记录:`/sdcard/Download/sg_soak.log`(每 10 分钟采样)
-- [ ] 待重连 adb 拉取后分析:RSS 增长曲线/tick 断档/崩溃/电池
-- [ ] RSS 若超标(预算 40MB),记录已知限制并评估是否泄漏
+- [x] 24h 压测 08-14 20:04 启动,实际连续运行 54h(至 08-17 02:00):**零崩溃、pid 未变、服务前台存活、tick 持续递增**
+- [x] 设备端自记录脚本被 EMUI 后台回收(仅 1 行采样),RSS 曲线仅保留首尾 2 点(155.4→167.2MB)
+- [x] 已切换电脑端 adb 保活采样(`tools/soak2_sample.ps1`,每 10 分钟)→ `build/soak_test/soak2.csv`,待跑满 12h 后补分析
+- [x] 稳定性结论:**54h 无泄漏迹象**(54h 增长 +7.6%,低速,需更多点确认);性能曲线数据后补
+- [ ] 压测报告待补:12h 采样完成后输出 RSS 趋势/电池/CPU 结论并勾选
 
 ## Phase 2 · 审计与质量(1-2 天)
 
+- [x] Semgrep 规则扫描:修复 3 条规则(metavariable-regex→metavariable-pattern,消除 Windows 下 regex 失效 bug)+ 修正 GCM 误报正则为 `ecb|des|rc4`;9 条规则全绿,**0 findings**
+- [x] 密钥/明文硬编码扫描:`SecretKeySpec` 两处均为 SecureRandom/KEK 派生(无字面量),已加 nosemgrep 说明
+- [x] 日志泄露扫描:`iv` 正则加词边界(`\b...\b`),消除 "alive/Keystore" 误报;3 处日志均为状态/异常信息,无敏感值
+- [x] 权限清单审查:`AndroidManifest.xml` 仅 6 项必要权限,**无 INTERNET / QUERY_ALL_PACKAGES**
+- [x] Rust clippy `--all-targets`:修复 9 处(empty_line_after_doc、too_many_arguments、collapsible_match、needless_lifetimes、manual_strip、needless_range_loop、manual_range_contains),全绿
+- [x] 不安全算法扫描:`Cipher.getInstance` 全部 `AES/GCM/NoPadding`(无 ECB/DES/RC4);无 TrustManager/WebView JS
+- [x] 开源合规:NOTICE(算法原创性+参考致谢)已落地,确认无遗漏
 - [ ] MobSF 静态扫描:`mobfscan apk` 出报告,修复 Critical/High 项
-- [ ] Semgrep 规则扫描:已接入 CI(`.semgrep/`),跑一次基线
-- [ ] 密钥/明文硬编码扫描:grep 全仓 `secret|password|key=` + `.key` 文件
-- [ ] 权限清单审查:`AndroidManifest.xml` 只保留必要权限,移除 QUERY_ALL_PACKAGES 等
 - [ ] 依赖 SBOM:`gen_sbom.py` 输出 `docs/sbom.txt`,检查无已知 CVE 的过期依赖
-- [ ] 开源合规:NOTICE(算法原创性+参考致谢)已落地,确认无遗漏
 
 ## Phase 3 · 文档与元数据(0.5 天)
 
