@@ -1,0 +1,128 @@
+# SensorGuard 社区版 v1.0 开源发布流程
+
+> 前提:不上应用市场,面向开发者/安全研究者开源。目标:社区首体验可用、可信、可贡献。
+
+---
+
+## 总体节奏
+
+```
+Phase 0  准备(1天)
+Phase 1  代码闭环(P0 必须修,2-3天)
+Phase 2  审计与质量(1-2天)
+Phase 3  文档与元数据(0.5天)
+Phase 4  Tag 与发布(0.5天)
+Phase 5  维护机制(持续)
+```
+
+---
+
+## Phase 0 · 准备(1 天)
+
+- [ ] 从 `master` 切发布分支 `release/community-v1.0`
+- [ ] 明确社区版定位声明:不上架、无后端、纯本地、面向安全研究者
+- [ ] 确定默认构建变体:社区版 = 去除 `internal`/`store` 双变体,只保留单一 `community` 变体
+- [ ] 确认包名:`com.yuexiao12.sensorguard`(统一,清掉 `com.tabbit` 残留)
+- [ ] 确认许可证:Apache-2.0(已落地)
+- [ ] 确认文档策略:核心开发设计文档保留本地、不随源码公开(已落地)
+
+## Phase 1 · 代码闭环(2-3 天,P0 阻塞)
+
+### 1.1 修规则误报 R112/SIDE_CHANNEL(阻塞)
+
+现状:`R112` 把系统 uid(1000/系统组件/GMS)也判为侧信道滥用,导致"系统应用被监控告警"的糟糕体验。
+
+动作:
+- [x] `core-rust/src/rules.rs` 新增 `UidGte(u32)` + `UidNotIn(Vec<i32>)` 谓词,数据驱动、OTA 可更新
+- [x] R112 加 `UidGte(10000)` 排除所有平台系统 uid + `UidNotIn([10213])` 排除 GMS
+- [x] 更精准特征:保留 `DeclPurposeNotIn([2,3])`(排除健身/导航类),`SystemProxyEquals(false)`
+- [x] 回归测试 `r112_system_uid_whitelist_blocks_system_and_gms`,覆盖 5 场景(普通 App 命中,系统 uid=1000/1001、GMS uid=10213、GMS+GYRO 均屏蔽)
+- [x] 保留原告警能力:对非系统 uid 且满足特征的 ACCEL/GYRO 组合仍正常观察
+- **提交 `a3db51b`,Rust 测试 95/95 通过**
+
+### 1.2 统一构建变体
+
+- [x] 删除 `store` flavor(社区版不复用商店版隐藏身份逻辑)
+- [x] 保留单一 `internal` flavor 作为社区版默认变体,`IS_INTERNAL=true` 恒真(显示 App 归属,社区版核心能力)
+- [x] DEBUG 门控按钮(`btnPressure`/`btnDemoAlert`)保持 BuildConfig.DEBUG 门控,release 构建不含调试入口
+- [x] README(中英)更新社区版定位与构建命令
+- **提交 `a9f475c`**
+
+### 1.3 清理历史残留
+
+- [x] 源码树 `com.tabbit` 零残留(仅设备端旧 APK,不影响仓库)
+- [x] `AndroidManifest.xml` 包名为 `com.yuexiao12.sensorguard`(确认一致)
+- [x] 无旧 `sensorguard_fhs` 等历史构建产物
+
+### 1.4 压测收尾
+
+- [ ] 24h 压测于 2026-08-14 20:04 启动,预计 08-15 20:04 结束
+- [ ] 设备端自记录:`/sdcard/Download/sg_soak.log`(每 10 分钟采样)
+- [ ] 待重连 adb 拉取后分析:RSS 增长曲线/tick 断档/崩溃/电池
+- [ ] RSS 若超标(预算 40MB),记录已知限制并评估是否泄漏
+
+## Phase 2 · 审计与质量(1-2 天)
+
+- [ ] MobSF 静态扫描:`mobfscan apk` 出报告,修复 Critical/High 项
+- [ ] Semgrep 规则扫描:已接入 CI(`.semgrep/`),跑一次基线
+- [ ] 密钥/明文硬编码扫描:grep 全仓 `secret|password|key=` + `.key` 文件
+- [ ] 权限清单审查:`AndroidManifest.xml` 只保留必要权限,移除 QUERY_ALL_PACKAGES 等
+- [ ] 依赖 SBOM:`gen_sbom.py` 输出 `docs/sbom.txt`,检查无已知 CVE 的过期依赖
+- [ ] 开源合规:NOTICE(算法原创性+参考致谢)已落地,确认无遗漏
+
+## Phase 3 · 文档与元数据(0.5 天)
+
+- [ ] `README.md` / `README_EN.md` 更新:
+  - 定位声明:社区版、不上架、纯本地
+  - 构建命令改为 `communityRelease`
+  - 移除已删除开发文档引用
+- [ ] 添加 `CHANGELOG.md`:记录 v1.0 特性与已知限制
+- [ ] 添加 `CONTRIBUTING.md`:贡献指南(提 issue/PR 流程、编码规范)
+- [ ] `CODE_OF_CONDUCT.md`(可选,开源社区惯例)
+- [ ] `docs/` 保留:提审清单废弃标记、PIA 保留、SHIZUKU 激活文档保留
+- [ ] LICENSE / NOTICE / NOTICE_CN.md 确认(已落地)
+
+## Phase 4 · Tag 与发布(0.5 天)
+
+- [ ] 合并 `release/community-v1.0` 到 `master`
+- [ ] CI 全绿:Rust 测试 + Android 编译 + MobSF
+- [ ] `git tag -a v1.0.0-community -m "社区版 v1.0.0 开源发布"`
+- [ ] `git push origin master --tags`
+- [ ] GitHub Releases:创建 Release 页面,附 `CHANGELOG.md` 内容
+- [ ] README 顶栏加 GitHub badge(版本/许可证/构建状态)
+- [ ] 公开仓库可见性确认(GitHub/Gitee 双端已公开)
+
+## Phase 5 · 维护机制(持续)
+
+- [ ] 建立 issue 模板(bug report / feature request / question)
+- [ ] 建立 PR 模板 + 自动 CI 检查
+- [ ] 维护节奏:每月至少响应 issue,重大安全修复 48h 内响应
+- [ ] 开源治理:谁是最终维护者、合并权限谁有
+- [ ] v1.1 规划公示:云端复核 opt-in 数据集、鸿蒙移植(社区版优先)
+
+---
+
+## 风险与决策点
+
+| 风险 | 决策 |
+|---|---|
+| 规则误报不修就发 → 社区首体验崩塌 | **必须修**,阻塞发布 |
+| RSS 超标(156MB vs 40MB 预算) | 社区版记录已知限制,不阻塞,但需定位是否泄漏 |
+| 鸿蒙移植 vs Android 收尾 | 社区版先 Android,鸿蒙列 v1.1 |
+| 云端功能 | 社区版不含,仅本地 |
+| 包名 `com.tabbit` 残留 | 必须清,否则旧设备双包名混乱 |
+
+---
+
+## 发布 check清单(最终)
+
+- [ ] Rust 测试 94/94 通过
+- [ ] Android 编译成功,APK 无 crash
+- [ ] 24h 压测 RSS 无泄漏
+- [ ] R112 系统 uid 白名单 + 回归测试
+- [ ] MobSF 零 Critical/High
+- [ ] 包名统一,无 `com.tabbit`
+- [ ] 单一构建变体
+- [ ] README/CHANGELOG/CONTRIBUTING/NOTICE 齐备
+- [ ] Git tag + GitHub Release
+- [ ] GitHub/Gitee 双端同步
