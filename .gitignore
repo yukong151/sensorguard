@@ -6,6 +6,9 @@ app/build/
 # Local config (SDK path etc.)
 local.properties
 
+# Release signing keystore (never commit secrets)
+keystore/
+
 # Rust
 core-rust/target/
 

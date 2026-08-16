@@ -51,6 +51,10 @@ cd core-rust && cargo build --release --target aarch64-linux-android
 
 环境要求:Android SDK、Android Studio JBR(Java 17)、Rust nightly + android target。
 
+### 直接安装
+
+社区版发布 APK(正式签名)可从 [GitHub Releases](https://github.com/yukong151/sensorguard/releases) 下载,支持侧载安装(需允许"安装未知来源应用")。
+
 ## 内测版精确归因(Shizuku)
 
 传感器/相机事件精确到 App 包名依赖 Shizuku。激活与授权步骤见 [docs/SHIZUKU_WIRELESS_SETUP.md](docs/SHIZUKU_WIRELESS_SETUP.md)(无线调试方式,每次开机需重新激活)。
