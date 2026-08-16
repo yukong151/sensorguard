@@ -57,8 +57,11 @@ cd core-rust && cargo build --release --target aarch64-linux-android
 
 ## 开发文档
 
-- `sensorguard_边缘计算及传感器安全的轻量级APP总开发开发文档 (3).md`:完整开发设计文档(威胁模型、算法、性能预算、合规)
-- `docs/`:商店提审清单、隐私影响评估、开发进度回顾等
+完整设计文档(威胁模型、算法、性能预算、合规)已在 v1.0 代码交付阶段归档,不再随源码公开。当前 `docs/` 目录保留:
+- `docs/store_listing.md`:商店提审清单
+- `docs/SHIZUKU_WIRELESS_SETUP.md`:Shizuku 无线激活步骤
+- `docs/PIA.md`:隐私影响评估
+- `docs/sensor_client_attribution_report.md`:告警归因报告
 
 ## 许可与致谢
 

@@ -57,8 +57,11 @@ Without Shizuku, the app silently degrades: sensor/camera events show "unknown s
 
 ## Documentation
 
-- `sensorguard_边缘计算及传感器安全的轻量级APP总开发开发文档 (3).md`: full design document (threat model, algorithms, performance budget, compliance)
-- `docs/`: store listing checklist, privacy impact assessment, development retrospectives
+The full design document (threat model, algorithms, performance budget, compliance) has been archived during the v1.0 code delivery phase and is no longer published with the source. The `docs/` directory retains:
+- `docs/store_listing.md`: store listing checklist
+- `docs/SHIZUKU_WIRELESS_SETUP.md`: Shizuku wireless activation steps
+- `docs/PIA.md`: privacy impact assessment
+- `docs/sensor_client_attribution_report.md`: alert attribution report
 
 ## License & Acknowledgments
 
