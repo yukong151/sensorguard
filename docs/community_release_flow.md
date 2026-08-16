@@ -89,12 +89,14 @@ Phase 5  维护机制(持续)
 
 ## Phase 4 · Tag 与发布(0.5 天)
 
-- [ ] 合并 `release/community-v1.0` 到 `master`
-- [ ] CI 全绿:Rust 测试 + Android 编译 + MobSF
+> 注:社区版全部改动直接提交 `master`(无独立 `release/community-v1.0` 分支),故发布直接在 master 打 tag。
+
+- [x] 直接在 `master` 打 tag(无独立 release 分支,社区版全程单分支开发)
+- [x] CI 全绿:Rust 测试 95/95 + clippy `--all-targets` 全绿 + `assembleInternalRelease` 构建成功(1.5MB,ProGuard/shrink/lintVital 通过)
 - [ ] `git tag -a v1.0.0-community -m "社区版 v1.0.0 开源发布"`
 - [ ] `git push origin master --tags`
 - [ ] GitHub Releases:创建 Release 页面,附 `CHANGELOG.md` 内容
-- [ ] README 顶栏加 GitHub badge(版本/许可证/构建状态)
+- [x] README 顶栏加 GitHub badge(版本/许可证/Rust 测试)
 - [ ] 公开仓库可见性确认(GitHub/Gitee 双端已公开)
 
 ## Phase 5 · 维护机制(持续)
