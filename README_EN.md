@@ -1,6 +1,8 @@
 # SensorGuard — Sensor Privacy Guardian
 
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](CHANGELOG.md)
+[![Rust](https://img.shields.io/badge/Rust-tests%2095%2F95-orange.svg)](core-rust)
 
 [简体中文](README.md) | **English**
 
@@ -62,6 +64,9 @@ The full design document (threat model, algorithms, performance budget, complian
 - `docs/SHIZUKU_WIRELESS_SETUP.md`: Shizuku wireless activation steps
 - `docs/PIA.md`: privacy impact assessment
 - `docs/sensor_client_attribution_report.md`: alert attribution report
+- `docs/sbom.txt`: dependency SBOM (CycloneDX 1.5)
+
+For contribution, see [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md); version history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## License & Acknowledgments
 

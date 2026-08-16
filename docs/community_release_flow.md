@@ -76,15 +76,16 @@ Phase 5  维护机制(持续)
 
 ## Phase 3 · 文档与元数据(0.5 天)
 
-- [ ] `README.md` / `README_EN.md` 更新:
-  - 定位声明:社区版、不上架、纯本地
-  - 构建命令改为 `communityRelease`
-  - 移除已删除开发文档引用
-- [ ] 添加 `CHANGELOG.md`:记录 v1.0 特性与已知限制
-- [ ] 添加 `CONTRIBUTING.md`:贡献指南(提 issue/PR 流程、编码规范)
-- [ ] `CODE_OF_CONDUCT.md`(可选,开源社区惯例)
-- [ ] `docs/` 保留:提审清单废弃标记、PIA 保留、SHIZUKU 激活文档保留
-- [ ] LICENSE / NOTICE / NOTICE_CN.md 确认(已落地)
+- [x] `README.md` / `README_EN.md` 更新:
+  - 定位声明:社区版、不上架、纯本地 ✅
+  - 构建命令 `assembleInternalDebug/Release`(单一 internal 变体)✅
+  - 移除已删除开发文档引用 ✅
+  - 新增版本/许可证/Rust 测试 badges + CHANGELOG/CONTRIBUTING/CoC 链接
+- [x] 添加 `CHANGELOG.md`:v1.0 特性、修复、已知限制(内存/Shizuku/零网络)
+- [x] 添加 `CONTRIBUTING.md`:issue/PR 流程、代码规范(Rust/Kotlin)、安全漏洞披露(48h)
+- [x] 添加 `CODE_OF_CONDUCT.md`:Contributor Covenant 2.1
+- [x] `docs/` 保留:提审清单废弃标记、PIA 保留、SHIZUKU 激活文档保留,新增 `sbom.txt`
+- [x] LICENSE / NOTICE / NOTICE_CN.md 确认(已落地)
 
 ## Phase 4 · Tag 与发布(0.5 天)
 

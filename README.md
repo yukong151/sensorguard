@@ -1,6 +1,8 @@
 # SensorGuard — 传感器隐私守护
 
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](CHANGELOG.md)
+[![Rust](https://img.shields.io/badge/Rust-tests%2095%2F95-orange.svg)](core-rust)
 
 **简体中文** | [English](README_EN.md)
 
@@ -62,6 +64,9 @@ cd core-rust && cargo build --release --target aarch64-linux-android
 - `docs/SHIZUKU_WIRELESS_SETUP.md`:Shizuku 无线激活步骤
 - `docs/PIA.md`:隐私影响评估
 - `docs/sensor_client_attribution_report.md`:告警归因报告
+- `docs/sbom.txt`:依赖 SBOM(CycloneDX 1.5)
+
+参与贡献请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md);版本历史见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可与致谢
 
