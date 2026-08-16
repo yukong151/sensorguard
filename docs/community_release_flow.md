@@ -93,11 +93,11 @@ Phase 5  维护机制(持续)
 
 - [x] 直接在 `master` 打 tag(无独立 release 分支,社区版全程单分支开发)
 - [x] CI 全绿:Rust 测试 95/95 + clippy `--all-targets` 全绿 + `assembleInternalRelease` 构建成功(1.5MB,ProGuard/shrink/lintVital 通过)
-- [ ] `git tag -a v1.0.0-community -m "社区版 v1.0.0 开源发布"`
-- [ ] `git push origin master --tags`
-- [ ] GitHub Releases:创建 Release 页面,附 `CHANGELOG.md` 内容
+- [x] `git tag -a v1.0.0-community -m "社区版 v1.0.0 开源发布"`
+- [x] `git push origin master --tags`(Gitee + GitHub 双端 tag 已推送)
+- [x] GitHub Releases:创建 Release 页面(id=371405773,附 CHANGELOG 要点),https://github.com/yukong151/sensorguard/releases/tag/v1.0.0-community
 - [x] README 顶栏加 GitHub badge(版本/许可证/Rust 测试)
-- [ ] 公开仓库可见性确认(GitHub/Gitee 双端已公开)
+- [ ] 公开仓库可见性确认(GitHub/Gitee 双端已公开)—— 当前 GitHub 为 private,若需公开请在 GitHub 页面切换 visibility
 
 ## Phase 5 · 维护机制(持续)
 
