@@ -593,13 +593,13 @@ if (ShizukuProbe.isShizukuInstalled(this)) {
     // P0-1:已知"摇一摇/开屏摇 + 广告 SDK"包名子串模式。命中且为 ACCEL/GYRO 时,
     // 把 Rust 引擎的 OBSERVE(侧信道提示)升级为 ALERT,让真滥用在 UI 显式告警。
     private val ABUSE_SDK_PATTERNS = listOf(
-        "com.zhihu.android.launch.view.shake", // 知乎摇一摇
-        "com.youku.xadsdk.ui.shake",           // 优酷开屏摇一摇
-        "com.pgl.ssdk",                        // Pangle 广告 SDK
-        "com.facebook.ads",                    // Meta Audience Network
-        "com.applovin",                        // AppLovin
-        "com.bytedance.sdk.openadsdk",         // 穿山甲
-        "com.qq.e.ads",                        // 优量汇
+        "com.zhihu.android.launch.view.shake", // 摇一摇类 SDK
+        "com.youku.xadsdk.ui.shake",           // 开屏摇一摇 SDK
+        "com.pgl.ssdk",                        // 广告 SDK
+        "com.facebook.ads",                    // 广告 SDK
+        "com.applovin",                        // 广告 SDK
+        "com.bytedance.sdk.openadsdk",         // 广告 SDK
+        "com.qq.e.ads",                        // 广告 SDK
     )
 
     private fun handleVerdicts(batch: VerdictBatchData) {
