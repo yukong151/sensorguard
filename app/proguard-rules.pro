@@ -36,5 +36,11 @@
 -dontwarn org.slf4j.**
 -dontwarn javax.annotation.**
 
+# ── Shizuku(反射加载,Class.forName 动态注册监听器,R8 混淆会破坏) ────────
+-keep class rikka.shizuku.Shizuku { *; }
+-keep class rikka.shizuku.Shizuku$* { *; }
+-keep class rikka.shizuku.ShizukuProvider { *; }
+-dontwarn rikka.shizuku.**
+
 # ── 三方库缺失的注解类(W11: Tink 引用 errorprone 注解,仅编译期元数据) ─────
 -dontwarn com.google.errorprone.annotations.**
