@@ -72,7 +72,7 @@ class TimelineActivity : AppCompatActivity() {
 
         if (BuildConfig.IS_INTERNAL) {
             binding.tvTimelineTitle.text =
-                "${getString(R.string.ui_title_timeline)}（内测版·含 App 归属）"
+                "${getString(R.string.ui_title_timeline)}（社区版·含 App 归属）"
         }
 
         // W12/P0-1 增强:筛选开关。默认开启(显示系统调用),关闭则仅展示第三方 App。
